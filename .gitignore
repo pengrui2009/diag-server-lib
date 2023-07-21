@@ -12,9 +12,8 @@
 *.pch
 
 # Compiled Dynamic libraries
-*.so
+
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -23,10 +22,14 @@
 # Compiled Static libraries
 *.lai
 *.la
-*.a
-*.lib
+
+build
+release
 
 # Executables
 *.exe
 *.out
 *.app
+
+.vs
+.vscode
