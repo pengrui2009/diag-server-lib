@@ -1,0 +1,62 @@
+#  Diagnostic Server library CMake File
+#  Copyright (C) 2023  Avijit Dey
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Entry Project CMake
+#
+cmake_minimum_required(VERSION 3.5)
+project(diag-server)
+
+# Cmake options
+option(BUILD_SHARED_LIBS "Option to build as shared library" OFF)
+option(BUILD_WITH_DLT "Option to use Dlt for logging" OFF)
+option(BUILD_WITH_BOOST_LOG "Option to use Boost for logging" ON)
+option(BUILD_DOXYGEN "Option to generate doxygen file" OFF)
+option(BUILD_WITH_TEST "Option to build test target" OFF)
+option(BUILD_EXAMPLES "Option to build example targets" OFF)
+option(BUILD_WIN_SYSTEM "Option to build within windows" OFF)
+
+SET(BOOST_PATH "./" CACHE STRING "select boost path")
+message("boost library path:${BOOST_PATH}")
+
+# add compiler preprocessor flag when dlt enabled
+if (BUILD_WITH_DLT)
+    add_compile_definitions(ENABLE_DLT_LOGGER)
+    message("Dlt logging enabled in diag-server library")
+endif (BUILD_WITH_DLT)
+
+# add compiler preprocessor flag when boost log enabled
+if (BUILD_WITH_BOOST_LOG)
+    add_compile_definitions(ENABLE_BOOST_LOGGER)
+    message("Dlt logging enabled in diag-server library")
+endif (BUILD_WITH_BOOST_LOG)
+
+if (BUILD_WIN_SYSTEM)
+    set(ENABLE_WIN_SYSTEM "ON")
+    add_definitions(-DBOOST_PATH=${BOOST_PATH})
+    add_compile_definitions(ASIO_STANDALONE)
+    # win10 : 0x0A00, reference:https://blog.csdn.net/v6543210/article/details/103104512
+    add_compile_definitions(_WIN32_WINNT)
+    message("Enable Definition of the build in Windows System")
+endif (BUILD_WIN_SYSTEM)
+
+# Build diag-server library
+add_subdirectory(src)
+
+# Build diag-server doxygen documentation
+if (BUILD_DOXYGEN)
+    add_subdirectory(docs)
+endif (BUILD_DOXYGEN)
+
+# Build diag-server test targets
+if (BUILD_WITH_TEST)
+    add_subdirectory(test)
+endif (BUILD_WITH_TEST)
+
+# Build diag-server example targets
+if (BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif (BUILD_EXAMPLES)

@@ -1,4 +1,4 @@
-#  Diagnostic Client library CMake File
+#  Diagnostic Server library CMake File
 #  Copyright (C) 2023  Avijit Dey
 # 
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,7 +6,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 cmake_minimum_required(VERSION 3.5)
-project(diag-client-lib)
+project(diag-server-lib)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -14,22 +14,22 @@ include(CMakePackageConfigHelpers)
 # Build all the libraries
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-# Build the diag client application
+# Build the diag server application
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/appl)
 
 #Export library
-install(EXPORT DiagClientLibTargets
-        FILE DiagClientLibTargets.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagClientLib
+install(EXPORT DiagServerLibTargets
+        FILE DiagServerLibTargets.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagServerLib
         )
 
 configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
-        "${CMAKE_CURRENT_BINARY_DIR}/DiagClientLibConfig.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagClientLib
+        "${CMAKE_CURRENT_BINARY_DIR}/DiagServerLibConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagServerLib
 )
 
 install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/DiagClientLibConfig.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagClientLib
+        "${CMAKE_CURRENT_BINARY_DIR}/DiagServerLibConfig.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/DiagServerLib
         )

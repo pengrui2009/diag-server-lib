@@ -1,9 +1,10 @@
-#  Diagnostic Client library CMake File
+#  Diagnostic Server library CMake File
 #  Copyright (C) 2023  Avijit Dey
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+cmake_minimum_required(VERSION 3.5)
 
 project(utility-support)
 
@@ -38,5 +39,5 @@ else ()
 endif (BUILD_WITH_DLT)
 
 install(TARGETS ${PROJECT_NAME}
-        EXPORT DiagClientLibTargets
+        EXPORT DiagServerLibTargets
         )

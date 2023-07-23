@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,7 +8,7 @@
 #include "src/dcm/conversation/dm_conversation_state_impl.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation_state_impl {
 ConversationStateImpl::ConversationStateImpl()
     : conversation_state_{std::make_unique<StateContext<ConversationState>>()} {
@@ -91,5 +91,5 @@ void kDiagSuccess::Stop() {}
 
 void kDiagSuccess::HandleMessage() {}
 }  // namespace conversation_state_impl
-}  // namespace client
+}  // namespace server
 }  // namespace diag

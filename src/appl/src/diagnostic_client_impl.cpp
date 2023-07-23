@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,10 +17,10 @@
 #include "parser/json_parser.h"
 
 namespace diag {
-namespace client {
+namespace server {
 // ctor
 DiagClientImpl::DiagClientImpl(std::string_view dm_client_config)
-    : diag::client::DiagClient{},
+    : diag::server::DiagClient{},
       dcm_instance_ptr{},
       dcm_thread_{} {
   logger::DiagClientLogger::GetDiagClientLogger().GetLogger().LogInfo(
@@ -28,7 +28,7 @@ DiagClientImpl::DiagClientImpl(std::string_view dm_client_config)
   // start parsing the config json file
   boost_support::parser::boostTree ptree{boost_support::parser::JsonParser{}.operator()(dm_client_config)};
   // create single dcm instance and pass the config tree
-  dcm_instance_ptr = std::make_unique<diag::client::dcm::DCMClient>(ptree);
+  dcm_instance_ptr = std::make_unique<diag::server::dcm::DCMClient>(ptree);
   logger::DiagClientLogger::GetDiagClientLogger().GetLogger().LogInfo(
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "DiagClient instance creation completed"; });
 }
@@ -55,17 +55,17 @@ void DiagClientImpl::DeInitialize() {
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "DiagClient De-Initialization completed"; });
 }
 
-diag::client::conversation::DiagClientConversation &DiagClientImpl::GetDiagnosticClientConversation(
+diag::server::conversation::DiagClientConversation &DiagClientImpl::GetDiagnosticClientConversation(
     std::string_view conversation_name) {
   return (dcm_instance_ptr->GetDiagnosticClientConversation(conversation_name));
 }
 
-std::pair<diag::client::DiagClient::VehicleResponseResult,
-          diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>
+std::pair<diag::server::DiagClient::VehicleResponseResult,
+          diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
 DiagClientImpl::SendVehicleIdentificationRequest(
-    diag::client::vehicle_info::VehicleInfoListRequestType vehicle_info_request) {
+    diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) {
   return (dcm_instance_ptr->SendVehicleIdentificationRequest(vehicle_info_request));
 }
 
-}  // namespace client
+}  // namespace server
 }  // namespace diag

@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAG_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H
-#define DIAG_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H
+#ifndef DIAG_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H
+#define DIAG_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H
 
 /* includes */
 #include <chrono>
@@ -21,7 +21,7 @@
 #include "uds_transport/protocol_types.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation {
 
 /*
@@ -31,16 +31,16 @@ namespace conversation {
 class VdConversation {
 public:
   using VehicleIdentificationResponseResult =
-      std::pair<diag::client::DiagClient::VehicleResponseResult,
-                diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>;
+      std::pair<diag::server::DiagClient::VehicleResponseResult,
+                diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>;
 
   using IndicationResult = ::uds_transport::UdsTransportProtocolMgr::IndicationResult;
 
 private:
   using PreselectionMode = std::uint8_t;
   using PreselectionValue = std::vector<std::uint8_t>;
-  using VehicleResponseResult = diag::client::DiagClient::VehicleResponseResult;
-  using VehicleAddrInfoResponseStruct = diag::client::vehicle_info::VehicleAddrInfoResponse;
+  using VehicleResponseResult = diag::server::DiagClient::VehicleResponseResult;
+  using VehicleAddrInfoResponseStruct = diag::server::vehicle_info::VehicleAddrInfoResponse;
 
 public:
   // ctor
@@ -137,6 +137,6 @@ private:
 };
 
 }  // namespace conversation
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAG_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H
+#endif  // DIAG_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_VD_CONVERSATION_H

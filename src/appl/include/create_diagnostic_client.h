@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,17 +6,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 /** @file create_diagnostic_client.h
- *  @brief Entry function to create Diagnostic Client library
+ *  @brief Entry function to create Diagnostic Server library
  *  @author Avijit Dey
  */
-#ifndef DIAG_CLIENT_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_
-#define DIAG_CLIENT_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_
+#ifndef DIAG_SERVER_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_
+#define DIAG_SERVER_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_
 
 #include <memory>
 #include <string_view>
 
 namespace diag {
-namespace client {
+namespace server {
 
 // forward declaration
 class DiagClient;
@@ -26,14 +26,14 @@ class DiagClient;
  *              This instance to be further used for all the functionalities.
  * @param[in]   diag_client_config_path
  *              path to diag client config file
- * @return      std::unique_ptr<diag::client::DiagClient>
+ * @return      std::unique_ptr<diag::server::DiagClient>
  *              Unique pointer to diag client object
  * @remarks     Implemented requirements:
  *              DiagClientLib-Library-Support, DiagClientLib-ComParam-Settings
  */
-std::unique_ptr<diag::client::DiagClient> CreateDiagnosticClient(std::string_view diag_client_config_path);
+std::unique_ptr<diag::server::DiagClient> CreateDiagnosticClient(std::string_view diag_client_config_path);
 
-}  // namespace client
+}  // namespace server
 }  // namespace diag
 
-#endif  // DIAG_CLIENT_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_
+#endif  // DIAG_SERVER_LIB_APPL_INCLUDE_CREATE_DIAGNOSTIC_CLIENT_H_

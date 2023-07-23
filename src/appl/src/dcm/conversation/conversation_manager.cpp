@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,11 +9,11 @@
 #include "src/dcm/conversation/conversation_manager.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation_manager {
 //ctor
-ConversationManager::ConversationManager(diag::client::config_parser::DcmClientConfig config,
-                                         diag::client::uds_transport::UdsTransportProtocolManager &uds_transport_mgr)
+ConversationManager::ConversationManager(diag::server::config_parser::DcmClientConfig config,
+                                         diag::server::uds_transport::UdsTransportProtocolManager &uds_transport_mgr)
     : uds_transport_mgr_{uds_transport_mgr} {
   // create the conversation config (vd & dm) out of passed config
   CreateConversationConfig(config);
@@ -26,13 +26,13 @@ void ConversationManager::Startup() {}
 void ConversationManager::Shutdown() {}
 
 // Get the required conversation
-std::unique_ptr<diag::client::conversation::DmConversation> ConversationManager::GetDiagnosticClientConversation(
+std::unique_ptr<diag::server::conversation::DmConversation> ConversationManager::GetDiagnosticClientConversation(
     std::string_view conversion_name) {
-  std::unique_ptr<diag::client::conversation::DmConversation> dm_conversation{};
+  std::unique_ptr<diag::server::conversation::DmConversation> dm_conversation{};
   auto it = conversation_config_.find(std::string{conversion_name});
   if (it != conversation_config_.end()) {
     // create the conversation
-    dm_conversation = std::make_unique<diag::client::conversation::DmConversation>(it->first, it->second);
+    dm_conversation = std::make_unique<diag::server::conversation::DmConversation>(it->first, it->second);
     // Register the connection
     dm_conversation->RegisterConnection(uds_transport_mgr_.doip_transport_handler->FindOrCreateTcpConnection(
         dm_conversation->dm_conversion_handler_, it->second.tcp_address, it->second.port_num));
@@ -40,13 +40,13 @@ std::unique_ptr<diag::client::conversation::DmConversation> ConversationManager:
   return dm_conversation;
 }
 
-std::unique_ptr<diag::client::conversation::VdConversation>
+std::unique_ptr<diag::server::conversation::VdConversation>
 ConversationManager::GetDiagnosticClientVehicleDiscoveryConversation(std::string_view conversation_name) {
-  std::unique_ptr<diag::client::conversation::VdConversation> vd_conversation{};
+  std::unique_ptr<diag::server::conversation::VdConversation> vd_conversation{};
   auto it = vd_conversation_config_.find(std::string{conversation_name});
   if (it != vd_conversation_config_.end()) {
     // create the conversation
-    vd_conversation = std::make_unique<diag::client::conversation::VdConversation>(it->first, it->second);
+    vd_conversation = std::make_unique<diag::server::conversation::VdConversation>(it->first, it->second);
     // Register the connection
     vd_conversation->RegisterConnection(uds_transport_mgr_.doip_transport_handler->FindOrCreateUdpConnection(
         vd_conversation->GetConversationHandler(), it->second.udp_address, it->second.port_num));
@@ -55,7 +55,7 @@ ConversationManager::GetDiagnosticClientVehicleDiscoveryConversation(std::string
 }
 
 // function to find or create conversation
-void ConversationManager::CreateConversationConfig(diag::client::config_parser::DcmClientConfig &config) {
+void ConversationManager::CreateConversationConfig(diag::server::config_parser::DcmClientConfig &config) {
   {  // Create Vehicle discovery config
     ::uds_transport::conversion_manager::ConversionIdentifierType conversion_identifier{};
     conversion_identifier.udp_address = config.udp_ip_address;
@@ -84,5 +84,5 @@ void ConversationManager::CreateConversationConfig(diag::client::config_parser::
 }
 
 }  // namespace conversation_manager
-}  // namespace client
+}  // namespace server
 }  // namespace diag

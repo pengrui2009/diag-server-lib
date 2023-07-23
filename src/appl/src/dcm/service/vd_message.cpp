@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -11,7 +11,7 @@
 #include <string_view>
 
 namespace diag {
-namespace client {
+namespace server {
 namespace vd_message {
 
 auto SerializeVehicleInfoList(std::uint8_t preselection_mode, uds_transport::ByteVector& preselection_value) noexcept
@@ -39,5 +39,5 @@ VdMessage::VdMessage() noexcept
       target_address_type{TargetAddressType::kPhysical} {}
 
 }  // namespace vd_message
-}  // namespace client
+}  // namespace server
 }  // namespace diag

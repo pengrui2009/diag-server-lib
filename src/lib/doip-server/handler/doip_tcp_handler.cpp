@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,17 +6,24 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "doip_handler/doip_tcp_handler.h"
-
-#include "doip_handler/common_doip_types.h"
-#include "doip_handler/logger.h"
+#include "handler/doip_tcp_handler.h"
+#include "uds_transport/protocol_mgr.h"
+#include "common/common_doip_types.h"
+#include "common/logger.h"
 
 namespace doip_handler {
 
-DoipTcpHandler::DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num)
-    : tcp_socket_handler_{std::make_unique<tcpSocket::DoipTcpSocketHandler>(local_tcp_address, tcp_port_num)} {}
+DoipTcpHandler::DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num, 
+    doip_server::connection::DoipTcpConnection &doip_connection)
+    : doip_connection_(doip_connection), 
+    tcp_socket_handler_{std::make_unique<tcpSocket::DoipTcpSocketHandler>(local_tcp_address, tcp_port_num)} {}
 
 DoipTcpHandler::~DoipTcpHandler() = default;
+
+uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Transmit(
+    uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address) {
+    return (doip_channel_list_[logical_address]->Transmit(std::move(message)));  
+}
 
 DoipTcpHandler::DoipChannel &DoipTcpHandler::CreateDoipChannel(std::uint16_t logical_address) {
   // create new doip channel
@@ -87,6 +94,14 @@ void DoipTcpHandler::DoipChannel::StartAcceptingConnection() {
   }
 }
 
+// Function to transmit the uds message
+uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::DoipChannel::Transmit(
+  uds_transport::UdsMessageConstPtr message) {
+  // tcp_connection_->Transmit(std::move(message));
+  // TODO
+  return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+}
+
 void DoipTcpHandler::DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
   received_doip_message_.host_ip_address = tcp_rx_message->host_ip_address_;
   received_doip_message_.port_num = tcp_rx_message->host_port_num_;
@@ -99,7 +114,12 @@ void DoipTcpHandler::DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
                                           tcp_rx_message->rxBuffer_.begin() + kDoipheadrSize,
                                           tcp_rx_message->rxBuffer_.end());
   }
-  
+  // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
+  //   doip_connection_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+  //                                           static_cast<uds_transport::UdsMessage::Address>(0),
+  //                                           uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
+  //                                           static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
+  //                                           "DoIPTcp", received_doip_message_.payload)};
   // Trigger async transmission
   {
     std::lock_guard<std::mutex> const lck{mutex_};
@@ -186,7 +206,7 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageAckResponse() {
   if (tcp_connection_->Transmit(std::move(diag_msg_ack_response))) {
     // Check for diag message ack code
     if (diag_msg_ack_code_ == kDoip_DiagnosticMessage_PosAckCode_Confirm) {
-      logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(
+      logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, "",
           [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Pos Ack Response success"; });
 
@@ -210,7 +230,7 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageAckResponse() {
       running_ = true;
       cond_var_.notify_all();
     } else {
-      logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(
+      logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, "",
           [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Neg Ack Response success"; });
     }
@@ -240,7 +260,7 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageResponse() {
 
   if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
-    logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+    logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Response message success";
     });
   }
@@ -270,7 +290,7 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticPendingMessageResponse() {
 
   if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
-    logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+    logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Pending Response message success";
     });
   }

@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,8 +9,8 @@
  *  @brief Header file of Diag Client Class
  *  @author Avijit Dey
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
 
 #include <string_view>
 
@@ -18,7 +18,7 @@
 #include "diagnostic_client_vehicle_info_message_type.h"
 
 namespace diag {
-namespace client {
+namespace server {
 
 /**
  * @brief    Class to manage Diagnostic Client
@@ -71,16 +71,16 @@ public:
    * @brief       Function to send vehicle identification request and get the Diagnostic Server list
    * @param[in]   vehicle_info_request
    *              Vehicle information sent along with request
-   * @return      std::pair<VehicleResponseResult, diag::client::vehicle_info::VehicleInfoMessageResponsePtr>
+   * @return      std::pair<VehicleResponseResult, diag::server::vehicle_info::VehicleInfoMessageResponsePtr>
    *              Pair consisting the result & response, contains valid response when result = kStatusOk
    * @remarks     Implemented requirements:
    *              DiagClientLib-VehicleDiscovery
    */
-  virtual std::pair<VehicleResponseResult, diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>
-  SendVehicleIdentificationRequest(diag::client::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
+  virtual std::pair<VehicleResponseResult, diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
+  SendVehicleIdentificationRequest(diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
 
   /**
-   * @brief       Function to get required diag client conversation object based on conversation name
+   * @brief       Function to get required diag server conversation object based on conversation name
    * @param[in]   conversation_name
    *              Name of conversation configured as json parameter "ConversationName"
    * @return      DiagClientConversation&
@@ -88,10 +88,10 @@ public:
    * @remarks     Implemented requirements:
    *              DiagClientLib-MultipleTester-Connection, DiagClientLib-Conversation-Construction
    */
-  virtual diag::client::conversation::DiagClientConversation& GetDiagnosticClientConversation(
+  virtual diag::server::conversation::DiagClientConversation& GetDiagnosticClientConversation(
       std::string_view conversation_name) = 0;
 };
 
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H

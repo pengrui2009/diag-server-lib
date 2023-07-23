@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,12 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#ifndef DIAG_CLIENT_UDP_SOCKET_HANDLER_H
-#define DIAG_CLIENT_UDP_SOCKET_HANDLER_H
+#ifndef DIAG_SERVER_UDP_SOCKET_HANDLER_H
+#define DIAG_SERVER_UDP_SOCKET_HANDLER_H
 
 //includes
 #include <functional>
 #include <string>
+#include <string_view>
 
 #include "socket/udp/udp_client.h"
 
@@ -23,7 +24,7 @@ using UdpSocket = boost_support::socket::udp::createUdpClientSocket;
 using UdpMessage = boost_support::socket::udp::UdpMessageType;
 using UdpMessagePtr = boost_support::socket::udp::UdpMessagePtr;
 using UdpMessageConstPtr = boost_support::socket::udp::UdpMessageConstPtr;
-using kDoip_String = std::string;
+using kDoip_String = std::string_view;
 using UdpMessageFunctor = std::function<void(UdpMessagePtr)>;
 
 /*
@@ -73,4 +74,4 @@ private:
 }  // namespace udpSocket
 }  // namespace doip_handler
 
-#endif  // DIAG_CLIENT_UDP_SOCKET_HANDLER_H
+#endif  // DIAG_SERVER_UDP_SOCKET_HANDLER_H

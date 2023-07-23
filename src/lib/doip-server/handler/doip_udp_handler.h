@@ -1,17 +1,24 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#ifndef DIAG_CLIENT_DOIP_UDP_HANDLER_H
-#define DIAG_CLIENT_DOIP_UDP_HANDLER_H
+#ifndef DIAG_SERVER_DOIP_UDP_HANDLER_H
+#define DIAG_SERVER_DOIP_UDP_HANDLER_H
 
 #include <string>
 
-#include "doip_handler/doip_payload_type.h"
-#include "doip_handler/udp_socket_handler.h"
+#include "common/doip_payload_type.h"
+#include "sockets/udp_socket_handler.h"
+
+//forward declaration
+namespace doip_server {
+namespace connection {
+class DoipUdpConnection;
+}
+}
 
 namespace doip_handler {
 
@@ -30,7 +37,8 @@ public:
   };
 
   // ctor
-  DoipUdpHandler(ip_address local_udp_address, uint16_t udp_port_num);
+  DoipUdpHandler(std::string_view local_udp_address, uint16_t udp_port_num, 
+    doip_server::connection::DoipUdpConnection &doip_connection);
 
   // dtor
   ~DoipUdpHandler();
@@ -40,6 +48,9 @@ public:
 
   // function to perform de-initialization
   void DeInitialize();
+
+  // Function to trigger transmission of udp messages
+  void Transmit();
 
   // function to create the expected VehicleIdentification Response
   void SetExpectedVehicleIdentificationResponseToBeSent(VehicleAddrInfo &vehicle_info);
@@ -51,6 +62,9 @@ public:
   auto VerifyVehicleIdentificationRequestWithExpectedEID(std::string_view eid) noexcept -> bool;
 
 private:
+  // reference to doip connection
+  doip_server::connection::DoipUdpConnection &doip_connection_;
+
   // udp socket handler unicast
   udpSocket::DoipUdpSocketHandler udp_socket_handler_unicast_;
 
@@ -92,10 +106,8 @@ private:
   static void CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, std::uint16_t payload_type,
                                       std::uint32_t payload_len);
 
-  // Function to trigger transmission of udp messages
-  void Transmit();
 };
 
 }  // namespace doip_handler
 
-#endif  //DIAG_CLIENT_DOIP_UDP_HANDLER_H
+#endif  //DIAG_SERVER_DOIP_UDP_HANDLER_H

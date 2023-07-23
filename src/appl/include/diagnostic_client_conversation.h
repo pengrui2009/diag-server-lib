@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,15 +9,15 @@
  *  @brief Header file of diagnostic client conversation
  *  @author Avijit Dey
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
 
 #include <cstdint>
 
 #include "diagnostic_client_uds_message_type.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation {
 
 /**
@@ -132,6 +132,6 @@ public:
       uds_message::UdsRequestMessageConstPtr message) = 0;
 };
 }  // namespace conversation
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H

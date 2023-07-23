@@ -1,18 +1,18 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H
 /* includes */
 #include "common_header.h"
 #include "utility/state.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation_state_impl {
 using namespace utility::state;
 // Conversation States
@@ -149,6 +149,6 @@ public:
   void HandleMessage() override;
 };
 }  // namespace conversation_state_impl
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DM_CONVERSATION_STATE_IMPL_H

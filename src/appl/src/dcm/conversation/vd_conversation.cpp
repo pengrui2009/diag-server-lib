@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -16,7 +16,7 @@
 #include "src/dcm/service/vd_message.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation {
 
 std::string ConvertToHexString(std::uint8_t char_start, std::uint8_t char_count,
@@ -134,7 +134,7 @@ VdConversation::VehicleIdentificationResponseResult VdConversation::SendVehicleI
 
   if (VerifyVehicleInfoRequest(vehicle_info_request_deserialized_value.first,
                                vehicle_info_request_deserialized_value.second.size())) {
-    if (connection_ptr_->Transmit(std::move(std::make_unique<diag::client::vd_message::VdMessage>(
+    if (connection_ptr_->Transmit(std::move(std::make_unique<diag::server::vd_message::VdMessage>(
             vehicle_info_request_deserialized_value.first, vehicle_info_request_deserialized_value.second,
             broadcast_address_))) != uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitFailed) {
       // Check if any response received
@@ -163,7 +163,7 @@ std::pair<VdConversation::IndicationResult, uds_transport::UdsMessagePtr> VdConv
   std::pair<IndicationResult, uds_transport::UdsMessagePtr> ret_val{IndicationResult::kIndicationNOk, nullptr};
   if (!payloadInfo.empty()) {
     ret_val.first = IndicationResult::kIndicationOk;
-    ret_val.second = std::move(std::make_unique<diag::client::vd_message::VdMessage>());
+    ret_val.second = std::move(std::make_unique<diag::server::vd_message::VdMessage>());
     ret_val.second->GetPayload().resize(size);
   }
   return ret_val;
@@ -273,5 +273,5 @@ void VdConversationHandler::HandleMessage(uds_transport::UdsMessagePtr message) 
 }
 
 }  // namespace conversation
-}  // namespace client
+}  // namespace server
 }  // namespace diag

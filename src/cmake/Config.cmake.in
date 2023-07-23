@@ -1,4 +1,4 @@
-#  Diagnostic Client library CMake File
+#  Diagnostic Server library CMake File
 #  Copyright (C) 2023  Avijit Dey
 # 
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,6 +7,6 @@
 
 @PACKAGE_INIT@
 
-include("${CMAKE_CURRENT_LIST_DIR}/DiagClientLibTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/DiagServerLibTargets.cmake")
 
-check_required_components(diag-client)
+check_required_components(diag-server)

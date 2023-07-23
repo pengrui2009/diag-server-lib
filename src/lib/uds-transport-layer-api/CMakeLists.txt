@@ -1,3 +1,6 @@
+
+cmake_minimum_required(VERSION 3.5)
+
 project(uds-transport-layer-api)
 
 include(GNUInstallDirs)
@@ -20,5 +23,5 @@ target_include_directories(${PROJECT_NAME}
         )
 
 install(TARGETS ${PROJECT_NAME}
-        EXPORT DiagClientLibTargets
+        EXPORT DiagServerLibTargets
         )

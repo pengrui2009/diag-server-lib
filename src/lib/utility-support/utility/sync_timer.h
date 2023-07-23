@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#ifndef DIAGNOSTIC_CLIENT_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H
-#define DIAGNOSTIC_CLIENT_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H
+#define DIAGNOSTIC_SERVER_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H
 
 namespace utility {
 namespace sync_timer {
@@ -85,4 +85,4 @@ private:
 }  // namespace sync_timer
 }  // namespace utility
 
-#endif  // DIAGNOSTIC_CLIENT_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H
+#endif  // DIAGNOSTIC_SERVER_LIB_LIB_UTILITY_UTILITY_SYNC_TIMER_H

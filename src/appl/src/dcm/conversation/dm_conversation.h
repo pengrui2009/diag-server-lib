@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
 /* includes */
 #include <string_view>
 
@@ -18,7 +18,7 @@
 #include "utility/sync_timer.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation {
 
 using ConversationState = conversation_state_impl::ConversationState;
@@ -27,7 +27,7 @@ using ConversationState = conversation_state_impl::ConversationState;
  @ Class Name        : DmConversation
  @ Class Description : Class to establish connection with Diagnostic Server                           
  */
-class DmConversation final : public ::diag::client::conversation::DiagClientConversation {
+class DmConversation final : public ::diag::server::conversation::DiagClientConversation {
 public:
   using SyncTimer = utility::sync_timer::SyncTimer<std::chrono::steady_clock>;
   using SyncTimerState = SyncTimer::TimerState;
@@ -162,6 +162,6 @@ private:
   DmConversation &dm_conversation_;
 };
 }  // namespace conversation
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H

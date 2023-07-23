@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -81,7 +81,7 @@ protected:
         doip_udp_handler_{DiagUdpIpAddress, DiagUdpPortNum},
         doip_tcp_handler_{DiagTcpIpAddress, DiagTcpPortNum} {
     // Initialize logger
-    doip_handler::logger::LibGtestLogger::GetLibGtestLogger();
+    doip_handler::logger::DoipServerLogger::GetDiagServerLogger();
     // Initialize doip test handler
     doip_udp_handler_.Initialize();
     // Initialize diag client library

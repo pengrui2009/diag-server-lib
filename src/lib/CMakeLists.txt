@@ -1,4 +1,4 @@
-#  Diagnostic Client library CMake File
+#  Diagnostic Server library CMake File
 #  Copyright (C) 2023  Avijit Dey
 # 
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -15,5 +15,5 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/utility-support)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/uds-transport-layer-api)
 # adding Boost support library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/boost-support)
-# adding Doip Client library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/doip-client)
+# adding Doip Server library
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/doip-server)

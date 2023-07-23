@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,8 +6,8 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#ifndef DIAG_CLIENT_TCP_SOCKET_HANDLER_H
-#define DIAG_CLIENT_TCP_SOCKET_HANDLER_H
+#ifndef DIAG_SERVER_TCP_SOCKET_HANDLER_H
+#define DIAG_SERVER_TCP_SOCKET_HANDLER_H
 
 #include <memory>
 #include <string>
@@ -18,6 +18,7 @@
 #include "socket/tcp/tcp_server.h"
 
 namespace doip_handler {
+
 namespace tcpSocket {
 
 using TcpMessage = boost_support::socket::tcp::TcpMessageType;
@@ -88,9 +89,10 @@ private:
 
   // tcp socket
   std::unique_ptr<TcpSocket> tcp_socket_;
+
 };
 
 }  // namespace tcpSocket
 }  // namespace doip_handler
 
-#endif  //DIAG_CLIENT_TCP_SOCKET_HANDLER_H
+#endif  //DIAG_SERVER_TCP_SOCKET_HANDLER_H

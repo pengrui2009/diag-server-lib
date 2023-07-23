@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,7 +8,7 @@
 #include "src/common/diagnostic_manager.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace common {
 /*
  @ Class Name        : Diagnostic_manager
@@ -49,5 +49,5 @@ void DiagnosticManager::SignalShutdown() {
   cond_var.notify_all();
 }
 }  // namespace common
-}  // namespace client
+}  // namespace server
 }  // namespace diag

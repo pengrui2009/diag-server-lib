@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -13,12 +13,12 @@
 #include "src/dcm/service/dm_uds_message.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace conversation {
 //ctor
 DmConversation::DmConversation(std::string_view conversion_name,
                                ::uds_transport::conversion_manager::ConversionIdentifierType &conversion_identifier)
-    : diag::client::conversation::DiagClientConversation(),
+    : diag::server::conversation::DiagClientConversation(),
       activity_status_{ActivityStatusType::kInactive},
       active_session_{SessionControlType::kDefaultSession},
       active_security_{SecurityLevelType::kLocked},
@@ -70,7 +70,7 @@ DiagClientConversation::ConnectResult DmConversation::ConnectToDiagServer(std::u
   uds_transport::ByteVector payload{};  // empty payload
   // Send Connect request to doip layer
   DiagClientConversation::ConnectResult const connection_result{static_cast<DiagClientConversation::ConnectResult>(
-      connection_ptr_->ConnectToHost(std::move(std::make_unique<diag::client::uds_message::DmUdsMessage>(
+      connection_ptr_->ConnectToHost(std::move(std::make_unique<diag::server::uds_message::DmUdsMessage>(
           source_address_, target_address, host_ip_addr, payload))))};
   remote_address_ = host_ip_addr;
   target_address_ = target_address;
@@ -131,7 +131,7 @@ std::pair<DiagClientConversation::DiagResult, uds_message::UdsResponseMessagePtr
     uds_transport::ByteVector payload{message->GetPayload()};
     // Initiate Sending of diagnostic request
     uds_transport::UdsTransportProtocolMgr::TransmissionResult transmission_result{
-        connection_ptr_->Transmit(std::move(std::make_unique<diag::client::uds_message::DmUdsMessage>(
+        connection_ptr_->Transmit(std::move(std::make_unique<diag::server::uds_message::DmUdsMessage>(
             source_address_, target_address_, message->GetHostIpAddress(), payload)))};
     if (transmission_result == uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk) {
       // Diagnostic Request Sent successful
@@ -209,7 +209,7 @@ std::pair<DiagClientConversation::DiagResult, uds_message::UdsResponseMessagePtr
             break;
           case ConversationState::kDiagSuccess:
             // change state to idle, form the uds response and return
-            ret_val.second = std::move(std::make_unique<diag::client::uds_message::DmUdsResponse>(payload_rx_buffer));
+            ret_val.second = std::move(std::make_unique<diag::server::uds_message::DmUdsResponse>(payload_rx_buffer));
             ret_val.first = DiagClientConversation::DiagResult::kDiagSuccess;
             conversation_state_.GetConversationStateContext().TransitionTo(ConversationState::kIdle);
             break;
@@ -274,7 +274,7 @@ DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
         // resize the global rx buffer
         payload_rx_buffer.resize(size);
         ret_val.first = uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationOk;
-        ret_val.second = std::move(std::make_unique<diag::client::uds_message::DmUdsMessage>(
+        ret_val.second = std::move(std::make_unique<diag::server::uds_message::DmUdsMessage>(
             source_address_, target_address_, "", payload_rx_buffer));
         conversation_state_.GetConversationStateContext().TransitionTo(ConversationState::kDiagRecvdFinalRes);
       }
@@ -363,5 +363,5 @@ void DmConversationHandler::HandleMessage(uds_transport::UdsMessagePtr message) 
   dm_conversation_.HandleMessage(std::move(message));
 }
 }  // namespace conversation
-}  // namespace client
+}  // namespace server
 }  // namespace diag

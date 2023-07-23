@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,12 +6,12 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "doip_handler/doip_udp_handler.h"
+#include "handler/doip_udp_handler.h"
 
 #include <algorithm>
 #include <utility>
 
-#include "doip_handler/common_doip_types.h"
+#include "common/common_doip_types.h"
 
 namespace doip_handler {
 
@@ -70,8 +70,10 @@ void SerializeVINFromString(std::string& input_string, std::vector<uint8_t>& out
   }
 }
 
-DoipUdpHandler::DoipUdpHandler(ip_address local_udp_address, uint16_t udp_port_num)
-    : udp_socket_handler_unicast_{local_udp_address, udp_port_num,
+DoipUdpHandler::DoipUdpHandler(std::string_view local_udp_address, uint16_t udp_port_num, 
+    doip_server::connection::DoipUdpConnection &doip_connection)
+    : doip_connection_(doip_connection), 
+      udp_socket_handler_unicast_{local_udp_address, udp_port_num,
                                   udpSocket::DoipUdpSocketHandler::PortType::kUdp_Unicast,
                                   [this](UdpMessagePtr udp_rx_message) {
                                     ProcessUdpUnicastMessage(std::move(udp_rx_message));

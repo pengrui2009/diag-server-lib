@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAG_CLIENT_DOIP__PAYLOAD_TYPE_H
-#define DIAG_CLIENT_DOIP__PAYLOAD_TYPE_H
+#ifndef DIAG_SERVER_DOIP__PAYLOAD_TYPE_H
+#define DIAG_SERVER_DOIP__PAYLOAD_TYPE_H
 
 #include <cstdint>
 #include <string>
@@ -58,4 +58,4 @@ public:
   std::vector<std::uint8_t> payload;
 };
 
-#endif  // DIAG_CLIENT_DOIP__PAYLOAD_TYPE_H
+#endif  // DIAG_SERVER_DOIP__PAYLOAD_TYPE_H

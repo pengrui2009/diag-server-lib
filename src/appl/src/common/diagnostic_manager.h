@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H
 /* includes */
 #include <string_view>
 
@@ -17,7 +17,7 @@
 #include "parser/json_parser.h"
 
 namespace diag {
-namespace client {
+namespace server {
 // forward declaration
 namespace conversation {
 class DiagClientConversation;
@@ -54,13 +54,13 @@ public:
   virtual void Shutdown() = 0;
 
   // Function to get the diagnostic client conversation
-  virtual diag::client::conversation::DiagClientConversation &GetDiagnosticClientConversation(
+  virtual diag::server::conversation::DiagClientConversation &GetDiagnosticClientConversation(
       std::string_view conversation_name) = 0;
 
   // Send Vehicle Identification Request and get response
-  virtual std::pair<diag::client::DiagClient::VehicleResponseResult,
-                    diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>
-  SendVehicleIdentificationRequest(diag::client::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
+  virtual std::pair<diag::server::DiagClient::VehicleResponseResult,
+                    diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
+  SendVehicleIdentificationRequest(diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
 
 private:
   // flag to terminate the main thread
@@ -71,6 +71,6 @@ private:
   std::mutex mutex_;
 };
 }  // namespace common
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_SRC_COMMON_DIAGNOSTIC_MANAGER_H

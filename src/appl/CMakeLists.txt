@@ -1,11 +1,12 @@
-#  Diagnostic Client library CMake File
+#  Diagnostic Server library CMake File
 #  Copyright (C) 2023  Avijit Dey
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-project(diag-client LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.5)
+project(diag-server LANGUAGES CXX)
 
 #set default language
 set(CMAKE_CXX_STANDARD 17)
@@ -61,7 +62,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PRIVATE
         common
         utility-support
-        doip-client
+        doip-server
         boost-support
         uds-transport-layer-api
         Threads::Threads
@@ -73,9 +74,9 @@ install(DIRECTORY
         DESTINATION etc
         )
 
-# install diag.client
+# install diag.server
 install(TARGETS ${PROJECT_NAME}
-        EXPORT DiagClientLibTargets
+        EXPORT DiagServerLibTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         )
 

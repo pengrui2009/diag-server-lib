@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -10,9 +10,9 @@
 #include "src/diagnostic_client_impl.h"
 
 namespace diag {
-namespace client {
-std::unique_ptr<diag::client::DiagClient> CreateDiagnosticClient(std::string_view diag_client_config_path) {
-  return (std::make_unique<diag::client::DiagClientImpl>(diag_client_config_path));
+namespace server {
+std::unique_ptr<diag::server::DiagClient> CreateDiagnosticClient(std::string_view diag_client_config_path) {
+  return (std::make_unique<diag::server::DiagClientImpl>(diag_client_config_path));
 }
-}  // namespace client
+}  // namespace server
 }  // namespace diag

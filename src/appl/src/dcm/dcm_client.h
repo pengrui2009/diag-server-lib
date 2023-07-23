@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H
-#define DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H
 /* includes */
 #include <string_view>
 
@@ -16,16 +16,16 @@
 #include "src/dcm/conversation/conversation_manager.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace dcm {
 /*
  @ Class Name        : DCM Client
  @ Class Description : Class to create Diagnostic Manager Client functionality                           
  */
-class DCMClient final : public diag::client::common::DiagnosticManager {
+class DCMClient final : public diag::server::common::DiagnosticManager {
 public:
   //ctor
-  explicit DCMClient(diag::client::common::property_tree &ptree);
+  explicit DCMClient(diag::server::common::property_tree &ptree);
 
   //dtor
   ~DCMClient() override;
@@ -40,14 +40,14 @@ public:
   void Shutdown() override;
 
   // Function to get the diagnostic client conversation
-  diag::client::conversation::DiagClientConversation &GetDiagnosticClientConversation(
+  diag::server::conversation::DiagClientConversation &GetDiagnosticClientConversation(
       std::string_view conversation_name) override;
 
   // Send Vehicle Identification Request and get response
-  std::pair<diag::client::DiagClient::VehicleResponseResult,
-            diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>
+  std::pair<diag::server::DiagClient::VehicleResponseResult,
+            diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
   SendVehicleIdentificationRequest(
-      diag::client::vehicle_info::VehicleInfoListRequestType vehicle_info_request) override;
+      diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) override;
 
 private:
   // uds transport protocol Manager
@@ -57,16 +57,16 @@ private:
   std::unique_ptr<conversation_manager::ConversationManager> conversation_mgr;
 
   // map to store conversation pointer along with conversation name
-  std::unordered_map<std::string, std::unique_ptr<diag::client::conversation::DiagClientConversation>>
+  std::unordered_map<std::string, std::unique_ptr<diag::server::conversation::DiagClientConversation>>
       diag_client_conversation_map;
 
   // store the diag client conversation for vehicle discovery
   std::unique_ptr<conversation::VdConversation> diag_client_vehicle_discovery_conversation;
 
   // function to read from property tree to config structure
-  static diag::client::config_parser::DcmClientConfig GetDcmClientConfig(diag::client::common::property_tree &ptree);
+  static diag::server::config_parser::DcmClientConfig GetDcmClientConfig(diag::server::common::property_tree &ptree);
 };
 }  // namespace dcm
-}  // namespace client
+}  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_CLIENT_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_SRC_DIAGNOSTIC_COMMUNICATION_MANAGER_H

@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -11,11 +11,11 @@
 #include "doip_transport_protocol_handler.h"
 
 namespace diag {
-namespace client {
+namespace server {
 namespace uds_transport {
 //ctor
 UdsTransportProtocolManager::UdsTransportProtocolManager(/* pass the protocol kind */)
-    : doip_transport_handler{std::make_unique<doip_client::transportProtocolHandler::DoipTransportProtocolHandler>(
+    : doip_transport_handler{std::make_unique<doip_server::transportProtocolHandler::DoipTransportProtocolHandler>(
           handler_id_count, *this)} {}
 
 // initialize all the transport protocol handler
@@ -36,5 +36,5 @@ void UdsTransportProtocolManager::Shutdown() {
   doip_transport_handler->Stop();
 }
 }  // namespace uds_transport
-}  // namespace client
+}  // namespace server
 }  // namespace diag

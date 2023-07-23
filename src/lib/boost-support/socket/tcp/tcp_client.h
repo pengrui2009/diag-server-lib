@@ -1,12 +1,12 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
  * Copyright (C) 2023  Avijit Dey
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_CLIENT_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H
-#define DIAGNOSTIC_CLIENT_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H
+#define DIAGNOSTIC_SERVER_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H
 // includes
 #include <boost/asio.hpp>
 #include <string>
@@ -88,4 +88,4 @@ private:
 }  // namespace tcp
 }  // namespace socket
 }  // namespace boost_support
-#endif  // DIAGNOSTIC_CLIENT_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H
+#endif  // DIAGNOSTIC_SERVER_LIB_LIB_BOOST_SUPPORT_SOCKET_TCP_TCP_CLIENT_H

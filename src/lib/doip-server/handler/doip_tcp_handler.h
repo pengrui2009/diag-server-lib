@@ -1,4 +1,4 @@
-/* Diagnostic Client library
+/* Diagnostic Server library
 * Copyright (C) 2023  Avijit Dey
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,8 +6,8 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#ifndef DIAG_CLIENT_DOIP_TCP_HANDLER_H
-#define DIAG_CLIENT_DOIP_TCP_HANDLER_H
+#ifndef DIAG_SERVER_DOIP_TCP_HANDLER_H
+#define DIAG_SERVER_DOIP_TCP_HANDLER_H
 
 #include <functional>
 #include <map>
@@ -15,8 +15,16 @@
 #include <queue>
 #include <string_view>
 
-#include "doip_handler/doip_payload_type.h"
-#include "doip_handler/tcp_socket_handler.h"
+#include "common/doip_payload_type.h"
+#include "sockets/tcp_socket_handler.h"
+#include "uds_transport/protocol_mgr.h"
+
+//forward declaration
+namespace doip_server {
+namespace connection {
+class DoipTcpConnection;
+}
+}
 
 namespace doip_handler {
 
@@ -41,6 +49,13 @@ public:
 
     // De-Initialize
     void DeInitialize();
+
+    // Function to transmit the uds message
+    uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
+      uds_transport::UdsMessageConstPtr message);
+
+    // Function to Hand over all the message received
+    void HandleMessage(TcpMessagePtr tcp_rx_message);
 
     // Set expected Routing Activation response
     void SetExpectedRoutingActivationResponseToBeSent(std::uint8_t routing_activation_res_code);
@@ -101,7 +116,7 @@ public:
     std::vector<std::uint8_t> uds_pending_response_payload_;
   private:
     // Function invoked during reception
-    void HandleMessage(TcpMessagePtr tcp_rx_message);
+    // void HandleMessage(TcpMessagePtr tcp_rx_message);
 
     // Start accepting connection from client
     void StartAcceptingConnection();
@@ -131,15 +146,23 @@ public:
 
 public:
   // ctor
-  DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num);
+  DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num, 
+    doip_server::connection::DoipTcpConnection &doip_connection);
 
   // dtor
   ~DoipTcpHandler();
+
+  // Function to transmit the uds message
+  uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
+    uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
 
   // Function to create doip channel
   DoipChannel &CreateDoipChannel(std::uint16_t logical_address);
 
 private:
+  // reference to doip connection
+  doip_server::connection::DoipTcpConnection &doip_connection_;
+
   // tcp socket handler
   std::unique_ptr<tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
 
@@ -149,4 +172,4 @@ private:
 
 }  // namespace doip_handler
 
-#endif  //DIAG_CLIENT_DOIP_TCP_HANDLER_H
+#endif  //DIAG_SERVER_DOIP_TCP_HANDLER_H
