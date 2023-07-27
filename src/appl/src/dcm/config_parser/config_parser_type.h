@@ -37,13 +37,12 @@ struct ConversationType {
 };
 
 // Properties of diag client configuration
-struct DcmClientConfig {
+struct DCMServerConfig {
   // local udp address
   std::string udp_ip_address;
   // broadcast address
   std::string udp_broadcast_address;
-  // number of conversation
-  std::uint8_t num_of_conversation;
+  // conversation property
   // store all conversations
   std::vector<ConversationType> conversations;
 };

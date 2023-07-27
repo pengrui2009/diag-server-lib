@@ -5,16 +5,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-/** @file diagnostic_client_conversation.h
- *  @brief Header file of diagnostic client conversation
+/** @file diagnostic_server_conversation.h
+ *  @brief Header file of diagnostic server conversation
  *  @author Avijit Dey
  */
-#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
-#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_CONVERSATION_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_CONVERSATION_H
 
 #include <cstdint>
 
-#include "diagnostic_client_uds_message_type.h"
+#include "diagnostic_server_uds_message_type.h"
 
 namespace diag {
 namespace server {
@@ -24,7 +24,7 @@ namespace conversation {
  * @brief       Conversation class to establish connection with a Diagnostic Server
  * @details     Conversation class only support DoIP communication protocol for connecting to remote ECU
  */
-class DiagClientConversation {
+class DiagServerConversation {
 public:
   /**
    * @brief         Type alias of ip address type
@@ -65,24 +65,24 @@ public:
   };
 
   /**
-   * @brief      Constructor an instance of DiagClientConversation
+   * @brief      Constructor an instance of DiagServerConversation
    * @remarks    Implemented requirements:
-   *             DiagClientLib-Conversation-Construction, DiagClientLib-DoIP-Support
+   *             DiagServerLib-Conversation-Construction, DiagServerLib-DoIP-Support
    */
-  DiagClientConversation() = default;
+  DiagServerConversation() = default;
 
   /**
-   * @brief      Destructor an instance of DiagClientConversation
+   * @brief      Destructor an instance of DiagServerConversation
    * @remarks    Implemented requirements:
-   *             DiagClientLib-Conversation-Destruction
+   *             DiagServerLib-Conversation-Destruction
    */
-  virtual ~DiagClientConversation() = default;
+  virtual ~DiagServerConversation() = default;
 
   /**
    * @brief      Function to startup the Diagnostic Client Conversation
-   * @details    Must be called once and before using any other functions of DiagClientConversation
+   * @details    Must be called once and before using any other functions of DiagServerConversation
    * @remarks    Implemented requirements:
-   *             DiagClientLib-Conversation-StartUp
+   *             DiagServerLib-Conversation-StartUp
    */
   virtual void Startup() = 0;
 
@@ -91,7 +91,7 @@ public:
    * @details    Must be called during shutdown phase, no further processing of any
    *             function will be allowed after this call
    * @remarks    Implemented requirements:
-   *             DiagClientLib-Conversation-Shutdown
+   *             DiagServerLib-Conversation-Shutdown
    */
   virtual void Shutdown() = 0;
 
@@ -104,7 +104,7 @@ public:
    * @return      ConnectResult
    *              Connection result returned
    * @remarks     Implemented requirements:
-   *              DiagClientLib-Conversation-Connect
+   *              DiagServerLib-Conversation-Connect
    */
   virtual ConnectResult ConnectToDiagServer(std::uint16_t target_address, IpAddress host_ip_addr) = 0;
 
@@ -113,7 +113,7 @@ public:
    * @return      DisconnectResult
    *              Disconnection result returned
    * @remarks     Implemented requirements:
-   *              DiagClientLib-Conversation-Disconnect
+   *              DiagServerLib-Conversation-Disconnect
    */
   virtual DisconnectResult DisconnectFromDiagServer() = 0;
 
@@ -126,7 +126,7 @@ public:
    * @return      uds_message::UdsResponseMessagePtr
    *              Diagnostic Response message received, null_ptr in case of error
    * @remarks     Implemented requirements:
-   *              DiagClientLib-Conversation-DiagRequestResponse
+   *              DiagServerLib-Conversation-DiagRequestResponse
    */
   virtual std::pair<DiagResult, uds_message::UdsResponseMessagePtr> SendDiagnosticRequest(
       uds_message::UdsRequestMessageConstPtr message) = 0;
@@ -134,4 +134,4 @@ public:
 }  // namespace conversation
 }  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_CONVERSATION_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_CONVERSATION_H

@@ -6,17 +6,20 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+
 #include "handler/doip_tcp_handler.h"
 #include "uds_transport/protocol_mgr.h"
+
+
+#include "connection/connection_manager.h"
 #include "common/common_doip_types.h"
 #include "common/logger.h"
 
+namespace doip_server {
 namespace doip_handler {
 
-DoipTcpHandler::DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num, 
-    doip_server::connection::DoipTcpConnection &doip_connection)
-    : doip_connection_(doip_connection), 
-    tcp_socket_handler_{std::make_unique<tcpSocket::DoipTcpSocketHandler>(local_tcp_address, tcp_port_num)} {}
+DoipTcpHandler::DoipTcpHandler(std::string_view local_tcp_address, uint16_t tcp_port_num)
+    : tcp_socket_handler_{std::make_unique<::doip_handler::tcpSocket::DoipTcpSocketHandler>(local_tcp_address, tcp_port_num)} {}
 
 DoipTcpHandler::~DoipTcpHandler() = default;
 
@@ -25,15 +28,15 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Trans
     return (doip_channel_list_[logical_address]->Transmit(std::move(message)));  
 }
 
-DoipTcpHandler::DoipChannel &DoipTcpHandler::CreateDoipChannel(std::uint16_t logical_address) {
+DoipChannel &DoipTcpHandler::CreateDoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::uint16_t logical_address) {
   // create new doip channel
   doip_channel_list_.emplace(logical_address,
-                             std::make_unique<DoipTcpHandler::DoipChannel>(logical_address, *tcp_socket_handler_));
+                             std::make_unique<DoipChannel>(logical_address, *tcp_socket_handler_));
   return *doip_channel_list_[logical_address];
 }
 
-DoipTcpHandler::DoipChannel::DoipChannel(std::uint16_t logical_address,
-                                         tcpSocket::DoipTcpSocketHandler &tcp_socket_handler)
+DoipChannel::DoipChannel(std::uint16_t logical_address,
+                                         ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler)
     : logical_address_{logical_address},
       tcp_socket_handler_{tcp_socket_handler},
       tcp_connection_{},
@@ -62,14 +65,14 @@ DoipTcpHandler::DoipChannel::DoipChannel(std::uint16_t logical_address,
   });
 }
 
-DoipTcpHandler::DoipChannel::~DoipChannel() {
+DoipChannel::~DoipChannel() {
   exit_request_ = true;
   running_ = false;
   cond_var_.notify_all();
   thread_.join();
 }
 
-void DoipTcpHandler::DoipChannel::Initialize() {
+void DoipChannel::Initialize() {
   {
     std::lock_guard<std::mutex> const lck{mutex_};
     job_queue_.emplace([this]() { this->StartAcceptingConnection(); });
@@ -78,11 +81,11 @@ void DoipTcpHandler::DoipChannel::Initialize() {
   cond_var_.notify_all();
 }
 
-void DoipTcpHandler::DoipChannel::DeInitialize() {
+void DoipChannel::DeInitialize() {
   if (tcp_connection_) { tcp_connection_->DeInitialize(); }
 }
 
-void DoipTcpHandler::DoipChannel::StartAcceptingConnection() {
+void DoipChannel::StartAcceptingConnection() {
   // Get the tcp connection - this will return after client is connected
   tcp_connection_ = std::move(tcp_socket_handler_.CreateTcpConnection([this](TcpMessagePtr tcp_rx_message) {
     // handle message
@@ -95,14 +98,14 @@ void DoipTcpHandler::DoipChannel::StartAcceptingConnection() {
 }
 
 // Function to transmit the uds message
-uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::DoipChannel::Transmit(
+uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipChannel::Transmit(
   uds_transport::UdsMessageConstPtr message) {
   // tcp_connection_->Transmit(std::move(message));
   // TODO
   return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
-void DoipTcpHandler::DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
+void DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
   received_doip_message_.host_ip_address = tcp_rx_message->host_ip_address_;
   received_doip_message_.port_num = tcp_rx_message->host_port_num_;
   received_doip_message_.protocol_version = tcp_rx_message->rxBuffer_[0];
@@ -135,18 +138,18 @@ void DoipTcpHandler::DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
   cond_var_.notify_all();
 }
 
-auto DoipTcpHandler::DoipChannel::GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t {
+auto DoipChannel::GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t {
   return ((uint16_t) (((payload[BYTE_POS_TWO] & 0xFF) << 8) | (payload[BYTE_POS_THREE] & 0xFF)));
 }
 
-auto DoipTcpHandler::DoipChannel::GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t {
+auto DoipChannel::GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t {
   return ((uint32_t) ((payload[BYTE_POS_FOUR] << 24U) & 0xFF000000) |
           (uint32_t) ((payload[BYTE_POS_FIVE] << 16U) & 0x00FF0000) |
           (uint32_t) ((payload[BYTE_POS_SIX] << 8U) & 0x0000FF00) |
           (uint32_t) ((payload[BYTE_POS_SEVEN] & 0x000000FF)));
 }
 
-void DoipTcpHandler::DoipChannel::CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, std::uint16_t payload_type,
+void DoipChannel::CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, std::uint16_t payload_type,
                                                           std::uint32_t payload_len) {
   doipHeader.push_back(kDoip_ProtocolVersion);
   doipHeader.push_back(~((uint8_t) kDoip_ProtocolVersion));
@@ -158,7 +161,7 @@ void DoipTcpHandler::DoipChannel::CreateDoipGenericHeader(std::vector<uint8_t> &
   doipHeader.push_back((uint8_t) (payload_len & 0x000000FF));
 }
 
-void DoipTcpHandler::DoipChannel::SendRoutingActivationResponse() {
+void DoipChannel::SendRoutingActivationResponse() {
   TcpMessagePtr routing_activation_response{std::make_unique<TcpMessage>()};
   // create header
   routing_activation_response->txBuffer_.reserve(kDoipheadrSize + kDoip_RoutingActivation_ResMinLen);
@@ -181,7 +184,7 @@ void DoipTcpHandler::DoipChannel::SendRoutingActivationResponse() {
   if (tcp_connection_->Transmit(std::move(routing_activation_response))) { running_ = false; }
 }
 
-void DoipTcpHandler::DoipChannel::SendDiagnosticMessageAckResponse() {
+void DoipChannel::SendDiagnosticMessageAckResponse() {
   TcpMessagePtr diag_msg_ack_response{std::make_unique<TcpMessage>()};
   // create header
   diag_msg_ack_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessageAck_ResMinLen);
@@ -206,7 +209,7 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageAckResponse() {
   if (tcp_connection_->Transmit(std::move(diag_msg_ack_response))) {
     // Check for diag message ack code
     if (diag_msg_ack_code_ == kDoip_DiagnosticMessage_PosAckCode_Confirm) {
-      logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+      ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, "",
           [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Pos Ack Response success"; });
 
@@ -230,14 +233,14 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageAckResponse() {
       running_ = true;
       cond_var_.notify_all();
     } else {
-      logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+      ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, "",
           [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Neg Ack Response success"; });
     }
   }
 }
 
-void DoipTcpHandler::DoipChannel::SendDiagnosticMessageResponse() {
+void DoipChannel::SendDiagnosticMessageResponse() {
   TcpMessagePtr diag_uds_message_response{std::make_unique<TcpMessage>()};
   // create header
   diag_uds_message_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen +
@@ -260,14 +263,14 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticMessageResponse() {
 
   if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
-    logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+    ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Response message success";
     });
   }
 }
 
 
-void DoipTcpHandler::DoipChannel::SendDiagnosticPendingMessageResponse() {
+void DoipChannel::SendDiagnosticPendingMessageResponse() {
   TcpMessagePtr diag_uds_message_response{std::make_unique<TcpMessage>()};
   // create header
   diag_uds_message_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen +
@@ -290,27 +293,27 @@ void DoipTcpHandler::DoipChannel::SendDiagnosticPendingMessageResponse() {
 
   if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
-    logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+    ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Pending Response message success";
     });
   }
 }
 
-void DoipTcpHandler::DoipChannel::SetExpectedRoutingActivationResponseToBeSent(
+void DoipChannel::SetExpectedRoutingActivationResponseToBeSent(
     std::uint8_t routing_activation_res_code) {
   routing_activation_res_code_ = routing_activation_res_code;
 }
 
-void DoipTcpHandler::DoipChannel::SetExpectedDiagnosticMessageAckResponseToBeSend(std::uint8_t diag_msg_ack_code) {
+void DoipChannel::SetExpectedDiagnosticMessageAckResponseToBeSend(std::uint8_t diag_msg_ack_code) {
   diag_msg_ack_code_ = diag_msg_ack_code;
 }
 
-void DoipTcpHandler::DoipChannel::SetExpectedDiagnosticMessageUdsMessageToBeSend(std::vector<std::uint8_t> payload) {
+void DoipChannel::SetExpectedDiagnosticMessageUdsMessageToBeSend(std::vector<std::uint8_t> payload) {
   uds_response_payload_.clear();
   uds_response_payload_ = std::move(payload);
 }
 
-void DoipTcpHandler::DoipChannel::SetExpectedDiagnosticMessageWithPendingUdsMessageToBeSend(
+void DoipChannel::SetExpectedDiagnosticMessageWithPendingUdsMessageToBeSend(
   std::vector<std::uint8_t> payload, 
   std::uint8_t num_of_pending_response) {
   uds_pending_response_payload_.clear();
@@ -319,3 +322,4 @@ void DoipTcpHandler::DoipChannel::SetExpectedDiagnosticMessageWithPendingUdsMess
 }
 
 }  // namespace doip_handler
+}  // namespace doip_server

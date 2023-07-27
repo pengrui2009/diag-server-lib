@@ -11,6 +11,9 @@
 // #include "handler/tcp_transport_handler.h"
 // #include "handler/udp_transport_handler.h"
 
+#include "handler/doip_tcp_handler.h"
+#include "handler/doip_udp_handler.h"
+
 namespace doip_server {
 namespace connection {
 /*
@@ -19,9 +22,14 @@ namespace connection {
  */
 // ctor
 DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversion,
-                                     std::string_view tcp_ip_address, uint16_t port_num)
-    : uds_transport::Connection(1, conversion),
-      tcp_transport_handler_(std::make_unique<doip_handler::DoipTcpHandler>(tcp_ip_address, port_num, *this)) {}
+                                     std::string_view local_tcp_address, uint16_t tcp_port_num, std::uint16_t logical_address)
+    : logical_address_(logical_address),
+      uds_transport::Connection(1, conversion),
+      tcp_transport_handler_(std::make_unique<doip_handler::DoipTcpHandler>(local_tcp_address, tcp_port_num))
+      {
+
+      }
+    
 
 // Initialize
 DoipTcpConnection::InitializationResult DoipTcpConnection::Initialize() {
@@ -40,23 +48,23 @@ void DoipTcpConnection::Stop() {
 }
 
 // Check if already connected to host
-bool DoipTcpConnection::IsConnectToHost() { 
-    // return (tcp_transport_handler_->IsConnectToHost());
-    return true;
-}
+// bool DoipTcpConnection::IsConnectToHost() { 
+//     // return (tcp_transport_handler_->IsConnectToHost());
+//     return true;
+// }
 
 // Connect to host server
-uds_transport::UdsTransportProtocolMgr::ConnectionResult DoipTcpConnection::ConnectToHost(
-    uds_transport::UdsMessageConstPtr message) {
-    // return (tcp_transport_handler_->ConnectToHost(std::move(message)));
-    return uds_transport::UdsTransportProtocolMgr::ConnectionResult::kConnectionOk;
-}
+// uds_transport::UdsTransportProtocolMgr::ConnectionResult DoipTcpConnection::ConnectToHost(
+//     uds_transport::UdsMessageConstPtr message) {
+//     // return (tcp_transport_handler_->ConnectToHost(std::move(message)));
+//     return uds_transport::UdsTransportProtocolMgr::ConnectionResult::kConnectionOk;
+// }
 
 // Disconnect from host server
-uds_transport::UdsTransportProtocolMgr::DisconnectionResult DoipTcpConnection::DisconnectFromHost() {
-    // return (tcp_transport_handler_->DisconnectFromHost());
-    return uds_transport::UdsTransportProtocolMgr::DisconnectionResult::kDisconnectionOk;
-}
+// uds_transport::UdsTransportProtocolMgr::DisconnectionResult DoipTcpConnection::DisconnectFromHost() {
+//     // return (tcp_transport_handler_->DisconnectFromHost());
+//     return uds_transport::UdsTransportProtocolMgr::DisconnectionResult::kDisconnectionOk;
+// }
 
 // Indicate message Diagnostic message reception over TCP to user
 std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
@@ -76,8 +84,8 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
     // uds_transport::ChannelID channel_id = 0;
-    return (tcp_transport_handler_->Transmit(std::move(message), 0));
-    // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+    // return (tcp_transport_handler_->Transmit(std::move(message), 0));
+    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
 // Hands over a valid message to conversion
@@ -92,9 +100,13 @@ void DoipTcpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
  */
 // ctor
 DoipUdpConnection::DoipUdpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversation,
-                                     std::string_view udp_ip_address, uint16_t port_num)
-    : uds_transport::Connection(1, conversation),
-      udp_transport_handler_{std::make_unique<doip_handler::DoipUdpHandler>(udp_ip_address, port_num, *this)} {}
+                                     std::string_view udp_ip_address, uint16_t port_num, std::uint16_t logical_address)
+    : logical_address_(logical_address),
+      uds_transport::Connection(1, conversation),
+      udp_transport_handler_{std::make_unique<doip_handler::DoipUdpHandler>(udp_ip_address, port_num, *this)} 
+    {
+
+    }
 
 // Initialize
 DoipUdpConnection::InitializationResult DoipUdpConnection::Initialize() {
@@ -113,21 +125,21 @@ void DoipUdpConnection::Stop() {
 }
 
 // Check if already connected to host
-bool DoipUdpConnection::IsConnectToHost() { 
-    return false; 
-}
+// bool DoipUdpConnection::IsConnectToHost() { 
+//     return false; 
+// }
 
 // Connect to host server
-uds_transport::UdsTransportProtocolMgr::ConnectionResult DoipUdpConnection::ConnectToHost(
-    uds_transport::UdsMessageConstPtr message) {
-  (void) message;
-  return (uds_transport::UdsTransportProtocolMgr::ConnectionResult::kConnectionFailed);
-}
+// uds_transport::UdsTransportProtocolMgr::ConnectionResult DoipUdpConnection::ConnectToHost(
+//     uds_transport::UdsMessageConstPtr message) {
+//   (void) message;
+//   return (uds_transport::UdsTransportProtocolMgr::ConnectionResult::kConnectionFailed);
+// }
 
 // Disconnect from host server
-uds_transport::UdsTransportProtocolMgr::DisconnectionResult DoipUdpConnection::DisconnectFromHost() {
-    return (uds_transport::UdsTransportProtocolMgr::DisconnectionResult::kDisconnectionFailed);
-}
+// uds_transport::UdsTransportProtocolMgr::DisconnectionResult DoipUdpConnection::DisconnectFromHost() {
+//     return (uds_transport::UdsTransportProtocolMgr::DisconnectionResult::kDisconnectionFailed);
+// }
 
 // Indicate message Diagnostic message reception over TCP to user
 std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
@@ -146,7 +158,7 @@ DoipUdpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipUdpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
     // uds_transport::ChannelID channel_id = 0;
-    udp_transport_handler_->Transmit(/*std::move(message), 0*/);    
+    // udp_transport_handler_->Transmit(/*std::move(message), 0*/);    
     return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
@@ -156,18 +168,34 @@ void DoipUdpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
     conversation_->HandleMessage(std::move(message));
 }
 
+DoipConnectionManager::DoipConnectionManager(std::uint16_t logical_address) 
+    : logical_address_(logical_address)
+{
+
+}
+
+DoipConnectionManager::~DoipConnectionManager()
+{
+
+}
+
 // Function to create new connection to handle doip request and response
 std::shared_ptr<DoipTcpConnection> DoipConnectionManager::FindOrCreateTcpConnection(
-    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view tcp_ip_address,
-    uint16_t port_num) {
-    return (std::make_shared<DoipTcpConnection>(conversation, tcp_ip_address, port_num));
+    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
+    std::string_view local_tcp_address, 
+    uint16_t tcp_port_num, 
+    std::uint16_t logical_address) {
+    return (std::make_shared<DoipTcpConnection>(conversation, local_tcp_address, tcp_port_num, logical_address_));
+    // return CreateDoipChannel(conversation, logical_address);
 }
 
 // Function to create new connection to handle doip udp request and response
 std::shared_ptr<DoipUdpConnection> DoipConnectionManager::FindOrCreateUdpConnection(
-    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view udp_ip_address,
-    uint16_t port_num) {
-    return (std::make_shared<DoipUdpConnection>(conversation, udp_ip_address, port_num));
+    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
+    std::string_view local_udp_address, 
+    uint16_t udp_port_num, 
+    std::uint16_t logical_address) {
+    return (std::make_shared<DoipUdpConnection>(conversation, local_udp_address, udp_port_num, logical_address_));
 }
 }  // namespace connection
 }  // namespace doip_server

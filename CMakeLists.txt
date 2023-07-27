@@ -16,7 +16,7 @@ option(BUILD_WITH_DLT "Option to use Dlt for logging" OFF)
 option(BUILD_WITH_BOOST_LOG "Option to use Boost for logging" ON)
 option(BUILD_DOXYGEN "Option to generate doxygen file" OFF)
 option(BUILD_WITH_TEST "Option to build test target" OFF)
-option(BUILD_EXAMPLES "Option to build example targets" OFF)
+option(BUILD_EXAMPLES "Option to build example targets" ON)
 option(BUILD_WIN_SYSTEM "Option to build within windows" OFF)
 
 SET(BOOST_PATH "./" CACHE STRING "select boost path")

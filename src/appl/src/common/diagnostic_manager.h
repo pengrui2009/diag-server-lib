@@ -11,16 +11,16 @@
 #include <string_view>
 
 #include "common_header.h"
-#include "include/diagnostic_client.h"
-#include "include/diagnostic_client_uds_message_type.h"
-#include "include/diagnostic_client_vehicle_info_message_type.h"
+#include "include/diagnostic_server.h"
+#include "include/diagnostic_server_uds_message_type.h"
+#include "include/diagnostic_server_vehicle_info_message_type.h"
 #include "parser/json_parser.h"
 
 namespace diag {
 namespace server {
 // forward declaration
 namespace conversation {
-class DiagClientConversation;
+class DiagServerConversation;
 }
 
 namespace common {
@@ -54,11 +54,11 @@ public:
   virtual void Shutdown() = 0;
 
   // Function to get the diagnostic client conversation
-  virtual diag::server::conversation::DiagClientConversation &GetDiagnosticClientConversation(
+  virtual diag::server::conversation::DiagServerConversation &ListenDiagnosticServerConversation(
       std::string_view conversation_name) = 0;
 
   // Send Vehicle Identification Request and get response
-  virtual std::pair<diag::server::DiagClient::VehicleResponseResult,
+  virtual std::pair<diag::server::DiagServer::VehicleResponseResult,
                     diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
   SendVehicleIdentificationRequest(diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
 

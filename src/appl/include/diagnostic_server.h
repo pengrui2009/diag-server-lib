@@ -5,17 +5,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-/** @file diagnostic_client.h
- *  @brief Header file of Diag Client Class
+/** @file diagnostic_server.h
+ *  @brief Header file of Diag Server Class
  *  @author Avijit Dey
  */
-#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
-#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_H
 
 #include <string_view>
 
-#include "diagnostic_client_conversation.h"
-#include "diagnostic_client_vehicle_info_message_type.h"
+#include "diagnostic_server_conversation.h"
+#include "diagnostic_server_vehicle_info_message_type.h"
 
 namespace diag {
 namespace server {
@@ -23,7 +23,7 @@ namespace server {
 /**
  * @brief    Class to manage Diagnostic Client
  */
-class DiagClient {
+class DiagServer {
 public:
   /**
    * @brief  Definitions of Vehicle Identification response result
@@ -37,33 +37,33 @@ public:
 
 public:
   /**
-   * @brief         Constructs an instance of DiagClient
+   * @brief         Constructs an instance of DiagServer
    * @remarks       Implemented requirements:
-   *                DiagClientLib-Construction
+   *                DiagServerLib-Construction
    */
-  DiagClient() = default;
+  DiagServer() = default;
 
   /**
-   * @brief         Destruct an instance of DiagClient
+   * @brief         Destruct an instance of DiagServer
    * @remarks       Implemented requirements:
-   *                DiagClientLib-Destruction
+   *                DiagServerLib-Destruction
    */
-  virtual ~DiagClient() = default;
+  virtual ~DiagServer() = default;
 
   /**
-   * @brief        Function to initialize the already created instance of DiagClient
-   * @details      Must be called once and before using any other functions of DiagClient
+   * @brief        Function to initialize the already created instance of DiagServer
+   * @details      Must be called once and before using any other functions of DiagServer
    * @remarks      Implemented requirements:
-   *               DiagClientLib-Initialization
+   *               DiagServerLib-Initialization
    */
   virtual void Initialize() = 0;
 
   /**
-   * @brief        Function to de-initialize the already initialized instance of DiagClient
+   * @brief        Function to de-initialize the already initialized instance of DiagServer
    * @details      Must be called during shutdown phase, no further processing of any
    *               function will be allowed after this call
    * @remarks      Implemented requirements:
-   *               DiagClientLib-DeInitialization
+   *               DiagServerLib-DeInitialization
    */
   virtual void DeInitialize() = 0;
 
@@ -74,7 +74,7 @@ public:
    * @return      std::pair<VehicleResponseResult, diag::server::vehicle_info::VehicleInfoMessageResponsePtr>
    *              Pair consisting the result & response, contains valid response when result = kStatusOk
    * @remarks     Implemented requirements:
-   *              DiagClientLib-VehicleDiscovery
+   *              DiagServerLib-VehicleDiscovery
    */
   virtual std::pair<VehicleResponseResult, diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>
   SendVehicleIdentificationRequest(diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) = 0;
@@ -83,15 +83,15 @@ public:
    * @brief       Function to get required diag server conversation object based on conversation name
    * @param[in]   conversation_name
    *              Name of conversation configured as json parameter "ConversationName"
-   * @return      DiagClientConversation&
+   * @return      DiagServerConversation&
    *              Reference to diag client conversation
    * @remarks     Implemented requirements:
-   *              DiagClientLib-MultipleTester-Connection, DiagClientLib-Conversation-Construction
+   *              DiagServerLib-MultipleTester-Connection, DiagServerLib-Conversation-Construction
    */
-  virtual diag::server::conversation::DiagClientConversation& GetDiagnosticClientConversation(
+  virtual diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation(
       std::string_view conversation_name) = 0;
 };
 
 }  // namespace server
 }  // namespace diag
-#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_H

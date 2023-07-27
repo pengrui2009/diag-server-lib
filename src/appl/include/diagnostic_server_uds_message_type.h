@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_UDS_MESSAGE_TYPE_H
-#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_UDS_MESSAGE_TYPE_H
+#ifndef DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_UDS_MESSAGE_TYPE_H
+#define DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_UDS_MESSAGE_TYPE_H
 
 #include <cstdint>
 #include <memory>
@@ -105,4 +105,4 @@ using UdsResponseMessagePtr = std::unique_ptr<UdsMessage>;
 }  // namespace server
 }  // namespace diag
 
-#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_CLIENT_UDS_MESSAGE_TYPE_H
+#endif  // DIAGNOSTIC_SERVER_LIB_APPL_INCLUDE_DIAGNOSTIC_SERVER_UDS_MESSAGE_TYPE_H

@@ -11,21 +11,23 @@
 #include <string>
 
 #include "common/doip_payload_type.h"
+
 #include "sockets/udp_socket_handler.h"
 
-//forward declaration
 namespace doip_server {
+
+//forward declaration
 namespace connection {
 class DoipUdpConnection;
 }
-}
+
 
 namespace doip_handler {
 
 // typedef
 using ip_address = std::string;
-using UdpMessagePtr = udpSocket::UdpMessagePtr;
-using UdpMessage = udpSocket::UdpMessage;
+using UdpMessagePtr = ::doip_handler::udpSocket::UdpMessagePtr;
+using UdpMessage = ::doip_handler::udpSocket::UdpMessage;
 
 class DoipUdpHandler {
 public:
@@ -48,6 +50,9 @@ public:
 
   // function to perform de-initialization
   void DeInitialize();
+  
+  // Function to Hand over all the message received
+  void HandleMessage(UdpMessagePtr udp_rx_message);
 
   // Function to trigger transmission of udp messages
   void Transmit();
@@ -66,10 +71,10 @@ private:
   doip_server::connection::DoipUdpConnection &doip_connection_;
 
   // udp socket handler unicast
-  udpSocket::DoipUdpSocketHandler udp_socket_handler_unicast_;
+  ::doip_handler::udpSocket::DoipUdpSocketHandler udp_socket_handler_unicast_;
 
   // udp socket handler broadcast
-  udpSocket::DoipUdpSocketHandler udp_socket_handler_broadcast_;
+  ::doip_handler::udpSocket::DoipUdpSocketHandler udp_socket_handler_broadcast_;
 
   // Expected Vehicle info
   VehicleAddrInfo expected_vehicle_info_{};
@@ -109,5 +114,5 @@ private:
 };
 
 }  // namespace doip_handler
-
+}  // namespace doip_server
 #endif  //DIAG_SERVER_DOIP_UDP_HANDLER_H

@@ -43,13 +43,13 @@ public:
   virtual void Stop() = 0;
 
   // Check if already connected to host
-  virtual bool IsConnectToHost() = 0;
+  // virtual bool IsConnectToHost() = 0;
 
   // Connect to Host Server
-  virtual UdsTransportProtocolMgr::ConnectionResult ConnectToHost(UdsMessageConstPtr message) = 0;
+  // virtual UdsTransportProtocolMgr::ConnectionResult ConnectToHost(UdsMessageConstPtr message) = 0;
 
   // Disconnect from Host Server
-  virtual UdsTransportProtocolMgr::DisconnectionResult DisconnectFromHost() = 0;
+  // virtual UdsTransportProtocolMgr::DisconnectionResult DisconnectFromHost() = 0;
 
   // Indicate message Diagnostic message reception over TCP to user
   virtual std::pair<UdsTransportProtocolMgr::IndicationResult, UdsMessagePtr> IndicateMessage(

@@ -12,7 +12,7 @@ namespace diag {
 namespace server {
 namespace conversation_manager {
 //ctor
-ConversationManager::ConversationManager(diag::server::config_parser::DcmClientConfig config,
+ConversationManager::ConversationManager(diag::server::config_parser::DCMServerConfig config,
                                          diag::server::uds_transport::UdsTransportProtocolManager &uds_transport_mgr)
     : uds_transport_mgr_{uds_transport_mgr} {
   // create the conversation config (vd & dm) out of passed config
@@ -26,7 +26,7 @@ void ConversationManager::Startup() {}
 void ConversationManager::Shutdown() {}
 
 // Get the required conversation
-std::unique_ptr<diag::server::conversation::DmConversation> ConversationManager::GetDiagnosticClientConversation(
+std::unique_ptr<diag::server::conversation::DmConversation> ConversationManager::StartDiagnosticServerConversation(
     std::string_view conversion_name) {
   std::unique_ptr<diag::server::conversation::DmConversation> dm_conversation{};
   auto it = conversation_config_.find(std::string{conversion_name});
@@ -41,7 +41,7 @@ std::unique_ptr<diag::server::conversation::DmConversation> ConversationManager:
 }
 
 std::unique_ptr<diag::server::conversation::VdConversation>
-ConversationManager::GetDiagnosticClientVehicleDiscoveryConversation(std::string_view conversation_name) {
+ConversationManager::StartDiagnosticServerVehicleDiscoveryConversation(std::string_view conversation_name) {
   std::unique_ptr<diag::server::conversation::VdConversation> vd_conversation{};
   auto it = vd_conversation_config_.find(std::string{conversation_name});
   if (it != vd_conversation_config_.end()) {
@@ -55,7 +55,7 @@ ConversationManager::GetDiagnosticClientVehicleDiscoveryConversation(std::string
 }
 
 // function to find or create conversation
-void ConversationManager::CreateConversationConfig(diag::server::config_parser::DcmClientConfig &config) {
+void ConversationManager::CreateConversationConfig(diag::server::config_parser::DCMServerConfig &config) {
   {  // Create Vehicle discovery config
     ::uds_transport::conversion_manager::ConversionIdentifierType conversion_identifier{};
     conversion_identifier.udp_address = config.udp_ip_address;

@@ -10,7 +10,7 @@
 /* includes */
 #include <string_view>
 
-#include "include/diagnostic_client_conversation.h"
+#include "include/diagnostic_server_conversation.h"
 #include "src/dcm/conversation/dm_conversation_state_impl.h"
 #include "uds_transport/connection.h"
 #include "uds_transport/conversion_handler.h"
@@ -27,7 +27,7 @@ using ConversationState = conversation_state_impl::ConversationState;
  @ Class Name        : DmConversation
  @ Class Description : Class to establish connection with Diagnostic Server                           
  */
-class DmConversation final : public ::diag::server::conversation::DiagClientConversation {
+class DmConversation final : public ::diag::server::conversation::DiagServerConversation {
 public:
   using SyncTimer = utility::sync_timer::SyncTimer<std::chrono::steady_clock>;
   using SyncTimerState = SyncTimer::TimerState;
@@ -77,7 +77,7 @@ public:
   // shared pointer to store the conversion handler
   std::shared_ptr<::uds_transport::ConversionHandler> dm_conversion_handler_;
 
-  static DiagClientConversation::DiagResult ConvertResponseType(
+  static DiagServerConversation::DiagResult ConvertResponseType(
       ::uds_transport::UdsTransportProtocolMgr::TransmissionResult result_type);
 
 private:

@@ -13,9 +13,9 @@
 #include <mutex>
 #include <string_view>
 
-#include "include/diagnostic_client.h"
-#include "include/diagnostic_client_uds_message_type.h"
-#include "include/diagnostic_client_vehicle_info_message_type.h"
+#include "include/diagnostic_server.h"
+#include "include/diagnostic_server_uds_message_type.h"
+#include "include/diagnostic_server_vehicle_info_message_type.h"
 #include "uds_transport/connection.h"
 #include "uds_transport/conversion_handler.h"
 #include "uds_transport/protocol_types.h"
@@ -31,7 +31,7 @@ namespace conversation {
 class VdConversation {
 public:
   using VehicleIdentificationResponseResult =
-      std::pair<diag::server::DiagClient::VehicleResponseResult,
+      std::pair<diag::server::DiagServer::VehicleResponseResult,
                 diag::server::vehicle_info::VehicleInfoMessageResponseUniquePtr>;
 
   using IndicationResult = ::uds_transport::UdsTransportProtocolMgr::IndicationResult;
@@ -39,7 +39,7 @@ public:
 private:
   using PreselectionMode = std::uint8_t;
   using PreselectionValue = std::vector<std::uint8_t>;
-  using VehicleResponseResult = diag::server::DiagClient::VehicleResponseResult;
+  using VehicleResponseResult = diag::server::DiagServer::VehicleResponseResult;
   using VehicleAddrInfoResponseStruct = diag::server::vehicle_info::VehicleAddrInfoResponse;
 
 public:

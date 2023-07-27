@@ -5,14 +5,16 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-
-#include "handler/doip_udp_handler.h"
-
 #include <algorithm>
 #include <utility>
 
-#include "common/common_doip_types.h"
+#include "handler/doip_udp_handler.h"
 
+#include "common/common_doip_types.h"
+#include "uds_transport/uds_message.h"
+#include "connection/connection_manager.h"
+
+namespace doip_server {
 namespace doip_handler {
 
 std::string ConvertToHexString(std::uint8_t char_start, std::uint8_t char_count,
@@ -74,13 +76,13 @@ DoipUdpHandler::DoipUdpHandler(std::string_view local_udp_address, uint16_t udp_
     doip_server::connection::DoipUdpConnection &doip_connection)
     : doip_connection_(doip_connection), 
       udp_socket_handler_unicast_{local_udp_address, udp_port_num,
-                                  udpSocket::DoipUdpSocketHandler::PortType::kUdp_Unicast,
+                                  ::doip_handler::udpSocket::DoipUdpSocketHandler::PortType::kUdp_Unicast,
                                   [this](UdpMessagePtr udp_rx_message) {
-                                    ProcessUdpUnicastMessage(std::move(udp_rx_message));
+                                    HandleMessage(std::move(udp_rx_message));
                                   }},
       udp_socket_handler_broadcast_{
-          local_udp_address, udp_port_num, udpSocket::DoipUdpSocketHandler::PortType::kUdp_Broadcast,
-          [this](UdpMessagePtr udp_rx_message) { ProcessUdpUnicastMessage(std::move(udp_rx_message)); }} {
+          local_udp_address, udp_port_num, ::doip_handler::udpSocket::DoipUdpSocketHandler::PortType::kUdp_Broadcast,
+          [this](UdpMessagePtr udp_rx_message) { HandleMessage(std::move(udp_rx_message)); }} {
   // Start thread to receive messages
   thread_ = std::thread([&]() {
     std::unique_lock<std::mutex> lck(mutex_);
@@ -110,6 +112,41 @@ void DoipUdpHandler::Initialize() {
 void DoipUdpHandler::DeInitialize() {
   udp_socket_handler_unicast_.Stop();
   udp_socket_handler_broadcast_.Stop();
+}
+
+void DoipUdpHandler::HandleMessage(UdpMessagePtr udp_rx_message) {
+  received_doip_message_.host_ip_address = udp_rx_message->host_ip_address_;
+  received_doip_message_.port_num = udp_rx_message->host_port_num_;
+  received_doip_message_.protocol_version = udp_rx_message->rx_buffer_[0];
+  received_doip_message_.protocol_version_inv = udp_rx_message->rx_buffer_[1];
+  received_doip_message_.payload_type = GetDoIPPayloadType(udp_rx_message->rx_buffer_);
+  received_doip_message_.payload_length = GetDoIPPayloadLength(udp_rx_message->rx_buffer_);
+
+  if (received_doip_message_.payload_length > 0U) {
+    received_doip_message_.payload.insert(received_doip_message_.payload.begin(),
+                                          udp_rx_message->rx_buffer_.begin() + kDoipheadrSize,
+                                          udp_rx_message->rx_buffer_.end());
+  }
+  // TODO
+  // uds_transport::UdsMessage::Address source_addr, uds_transport::UdsMessage::Address target_addr,
+  //       uds_transport::UdsMessage::TargetAddressType type, uds_transport::ChannelID channel_id, std::size_t size,
+  //       uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+  //       std::vector<uint8_t> payloadInfo
+  uds_transport::UdsMessage::Address source_addr = 0x00;
+  uds_transport::UdsMessage::Address target_addr = 0x00;
+  uds_transport::UdsMessage::TargetAddressType type = uds_transport::UdsMessage::TargetAddressType::kPhysical;
+  uds_transport::ChannelID channel_id = 0;
+  std::size_t size = received_doip_message_.payload.size();
+  uds_transport::Priority priority;
+  uds_transport::ProtocolKind protocol_kind = "doip";
+
+  doip_connection_.IndicateMessage(source_addr, target_addr, type, channel_id, size, priority, 
+                                   protocol_kind, received_doip_message_.payload);
+  // Trigger async transmission
+  running_ = true;
+  cond_var_.notify_all();
+
+
 }
 
 void DoipUdpHandler::ProcessUdpUnicastMessage(UdpMessagePtr udp_rx_message) {
@@ -204,3 +241,4 @@ void DoipUdpHandler::CreateDoipGenericHeader(std::vector<uint8_t>& doipHeader, s
 }
 
 }  // namespace doip_handler
+}  // namespace doip_server

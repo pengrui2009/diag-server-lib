@@ -1,0 +1,19 @@
+{
+  "UdpIpAddress": "172.16.25.127",
+  "UdpBroadcastAddress": "172.16.255.255",
+  "ConversationProperty": {
+    "p2ServerMax": 1000,
+    "p2StarClientMax": 5000,
+    "p4ServerMax": 5000,
+    "RxBufferSize": 4095,
+    "LogicalAddress": 1,
+    "VIN": "ABCDEFGH123456789",
+    "EID": "00:02:36:31:00:1c",
+    "GID": "0a:0b:0c:0d:0e:0f",
+    "Network": {
+      "ProtocolKind": "DoIP",
+      "TcpIpAddress": "0.0.0.0",
+      "TLS": false
+    }
+  }
+}

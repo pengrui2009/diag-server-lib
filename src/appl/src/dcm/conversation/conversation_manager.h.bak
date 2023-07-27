@@ -26,7 +26,7 @@ namespace conversation_manager {
 class ConversationManager {
 public:
   // ctor
-  ConversationManager(diag::server::config_parser::DcmClientConfig config,
+  ConversationManager(diag::server::config_parser::DCMServerConfig config,
                       diag::server::uds_transport::UdsTransportProtocolManager &uds_transport_mgr);
 
   // dtor
@@ -39,11 +39,11 @@ public:
   void Shutdown();
 
   // Get the required conversion
-  std::unique_ptr<diag::server::conversation::DmConversation> GetDiagnosticClientConversation(
+  std::unique_ptr<diag::server::conversation::DmConversation> StartDiagnosticServerConversation(
       std::string_view conversion_name);
 
   // Get the required conversion
-  std::unique_ptr<diag::server::conversation::VdConversation> GetDiagnosticClientVehicleDiscoveryConversation(
+  std::unique_ptr<diag::server::conversation::VdConversation> StartDiagnosticServerVehicleDiscoveryConversation(
       std::string_view conversion_name);
 
 private:
@@ -57,7 +57,7 @@ private:
   std::map<std::string, ::uds_transport::conversion_manager::ConversionIdentifierType> vd_conversation_config_;
 
   // function to create or find new conversion
-  void CreateConversationConfig(diag::server::config_parser::DcmClientConfig &config);
+  void CreateConversationConfig(diag::server::config_parser::DCMServerConfig &config);
 };
 }  // namespace conversation_manager
 }  // namespace server

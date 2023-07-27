@@ -18,29 +18,31 @@
 #include "common/doip_payload_type.h"
 #include "sockets/tcp_socket_handler.h"
 #include "uds_transport/protocol_mgr.h"
+#include "uds_transport/conversion_handler.h"
+
 
 //forward declaration
 namespace doip_server {
 namespace connection {
 class DoipTcpConnection;
 }
-}
 
 namespace doip_handler {
 
-using TcpMessage = tcpSocket::TcpMessage;
-using TcpMessagePtr = tcpSocket::TcpMessagePtr;
-using TcpMessageConstPtr = tcpSocket::TcpMessageConstPtr;
+using TcpMessage = ::doip_handler::tcpSocket::TcpMessage;
+using TcpMessagePtr = ::doip_handler::tcpSocket::TcpMessagePtr;
+using TcpMessageConstPtr = ::doip_handler::tcpSocket::TcpMessageConstPtr;
 
-class DoipTcpHandler {
+class DoipTcpHandler;
+
+// Class maintaining the doip channel
+class DoipChannel {
 public:
-  using TcpConnectionHandler = tcpSocket::DoipTcpSocketHandler::TcpConnectionHandler;
-  using DoipChannelReadCallback = tcpSocket::DoipTcpSocketHandler::TcpHandlerRead;
+  using TcpConnectionHandler = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpConnectionHandler;
+  using DoipChannelReadCallback = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpHandlerRead;
 
-  // Class maintaining the doip channel
-  class DoipChannel {
-  public:
-    DoipChannel(std::uint16_t logical_address, tcpSocket::DoipTcpSocketHandler &tcp_socket_handler);
+public:
+    DoipChannel(std::uint16_t logical_address, ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler);
 
     ~DoipChannel();
 
@@ -74,7 +76,7 @@ public:
     std::uint16_t logical_address_;
 
     // store the tcp socket handler reference
-    tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
+    ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
 
     // Tcp connection to handler tcp req and response
     std::unique_ptr<TcpConnectionHandler> tcp_connection_;
@@ -142,12 +144,16 @@ public:
     
     // Function to send diagnostic pending response
     void SendDiagnosticPendingMessageResponse();
-  };
+};
+
+class DoipTcpHandler {
+public:
+  using TcpConnectionHandler = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpConnectionHandler;
+  using DoipChannelReadCallback = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpHandlerRead;  
 
 public:
   // ctor
-  DoipTcpHandler(std::string_view local_tcp_address, std::uint16_t tcp_port_num, 
-    doip_server::connection::DoipTcpConnection &doip_connection);
+  DoipTcpHandler(std::string_view local_tcp_address, uint16_t tcp_port_num);
 
   // dtor
   ~DoipTcpHandler();
@@ -157,19 +163,22 @@ public:
     uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
 
   // Function to create doip channel
-  DoipChannel &CreateDoipChannel(std::uint16_t logical_address);
+  DoipChannel &CreateDoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::uint16_t logical_address);
 
 private:
   // reference to doip connection
-  doip_server::connection::DoipTcpConnection &doip_connection_;
+  // doip_server::connection::DoipTcpConnection &doip_connection_;
+  // Store the conversion
+  // const std::shared_ptr<ConversionHandler> &conversation_;
 
   // tcp socket handler
-  std::unique_ptr<tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
+  std::unique_ptr<::doip_handler::tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
 
   // list of doip channel
   std::map<std::uint16_t, std::unique_ptr<DoipChannel>> doip_channel_list_;
 };
 
 }  // namespace doip_handler
+}  // namespace doip_server
 
 #endif  //DIAG_SERVER_DOIP_TCP_HANDLER_H

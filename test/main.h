@@ -13,8 +13,8 @@
 
 #include "doip_handler/doip_udp_handler.h"
 #include "doip_handler/logger.h"
-#include "include/create_diagnostic_client.h"
-#include "include/diagnostic_client.h"
+#include "include/create_diagnostic_server.h"
+#include "include/diagnostic_server.h"
 
 namespace doip_client {
 
@@ -25,12 +25,12 @@ const std::string DiagUdpIpAddress{"172.16.25.128"};
 constexpr std::uint16_t DiagUdpPortNum{13400u};
 
 // Path to json file
-const std::string DiagClientJsonPath{"../../diag-client-lib/appl/etc/diag_client_config.json"};
+const std::string DiagServerJsonPath{"../../diag-client-lib/appl/etc/diag_client_config.json"};
 
 class DoipClientFixture : public ::testing::Test {
 protected:
   DoipClientFixture()
-      : diag_client_{diag::client::CreateDiagnosticClient(DiagClientJsonPath)},
+      : diag_client_{diag::client::CreateDiagnosticServer(DiagServerJsonPath)},
         doip_udp_handler_{DiagUdpIpAddress, DiagUdpPortNum} {
     // Initialize logger
     doip_handler::logger::DoipServerLogger::GetDiagServerLogger();
@@ -53,14 +53,14 @@ protected:
   void TearDown() override {}
 
   // Function to get Diag client library reference
-  auto GetDiagClientRef() noexcept -> diag::client::DiagClient& { return *diag_client_; }
+  auto GetDiagServerRef() noexcept -> diag::client::DiagServer& { return *diag_client_; }
 
   // Function to get Doip Test Handler reference
   auto GetDoipTestUdpHandlerRef() noexcept -> doip_handler::DoipUdpHandler& { return doip_udp_handler_; }
 
 private:
   // diag client library
-  std::unique_ptr<diag::client::DiagClient> diag_client_;
+  std::unique_ptr<diag::client::DiagServer> diag_client_;
 
   // doip test handler
   doip_handler::DoipUdpHandler doip_udp_handler_;

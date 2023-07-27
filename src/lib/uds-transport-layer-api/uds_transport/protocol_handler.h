@@ -48,12 +48,12 @@ public:
   // Get or Create a Tcp Connection
   virtual std::shared_ptr<Connection> FindOrCreateTcpConnection(
       const std::shared_ptr<ConversionHandler> &conversion_handler, std::string_view tcpIpaddress,
-      uint16_t portNum) = 0;
+      uint16_t portNum, std::uint16_t logical_address) = 0;
 
   // Get or Create an Udp Connection
   virtual std::shared_ptr<Connection> FindOrCreateUdpConnection(
       const std::shared_ptr<ConversionHandler> &conversion_handler, std::string_view udpIpaddress,
-      uint16_t portNum) = 0;
+      uint16_t portNum, std::uint16_t logical_address) = 0;
 
 protected:
   UdsTransportProtocolHandlerID handler_id_;

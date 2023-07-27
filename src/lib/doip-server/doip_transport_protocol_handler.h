@@ -12,6 +12,8 @@
 
 #include "common/common_doip_header.h"
 #include "uds_transport/protocol_handler.h"
+#include "handler/doip_tcp_handler.h"
+#include "handler/doip_udp_handler.h"
 
 namespace doip_server {
 //forward declaration
@@ -48,13 +50,13 @@ public:
 
   // Get or Create Tcp connection
   std::shared_ptr<uds_transport::Connection> FindOrCreateTcpConnection(
-      const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view tcp_ip_address, 
-      uint16_t port_num) override;
+      const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view local_tcp_address, 
+      uint16_t tcp_port_num, std::uint16_t logical_address) override;
 
   // Get or Create Udp connection
   std::shared_ptr<uds_transport::Connection> FindOrCreateUdpConnection(
       const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view udp_ip_address,
-      uint16_t port_num) override;
+      uint16_t port_num, std::uint16_t logical_address) override;
 
 private:
   // store handle id
@@ -63,6 +65,10 @@ private:
   uds_transport::UdsTransportProtocolMgr &transport_protocol_mgr_;
   // Create Doip Connection Manager
   std::unique_ptr<connection::DoipConnectionManager> doip_connection_mgr_ptr;
+
+  std::unique_ptr<doip_handler::DoipTcpHandler> doip_tcp_handler_;
+
+  std::unique_ptr<doip_handler::DoipUdpHandler> doip_udp_handler_;
 };
 
 }  // namespace transportProtocolHandler

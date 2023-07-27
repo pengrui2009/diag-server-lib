@@ -8,8 +8,8 @@
 #ifndef DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_SERVICE_VD_MESSAGE_H
 #define DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_SERVICE_VD_MESSAGE_H
 /* includes */
-#include "include/diagnostic_client_uds_message_type.h"
-#include "include/diagnostic_client_vehicle_info_message_type.h"
+#include "include/diagnostic_server_uds_message_type.h"
+#include "include/diagnostic_server_vehicle_info_message_type.h"
 #include "uds_transport/uds_message.h"
 
 namespace diag {

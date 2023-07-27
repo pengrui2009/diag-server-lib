@@ -15,17 +15,17 @@ namespace server {
 namespace logger {
 using Logger = utility::logger::Logger;
 
-class DiagClientLogger {
+class DiagServerLogger {
 public:
-  auto static GetDiagClientLogger() noexcept -> DiagClientLogger& {
-    static DiagClientLogger diag_client_logger_;
+  auto static GetDiagServerLogger() noexcept -> DiagServerLogger& {
+    static DiagServerLogger diag_client_logger_;
     return diag_client_logger_;
   }
 
   auto GetLogger() noexcept -> Logger& { return logger_; }
 
 private:
-  DiagClientLogger() = default;
+  DiagServerLogger() = default;
 
   // actual logger context
   Logger logger_{"dcap"};
