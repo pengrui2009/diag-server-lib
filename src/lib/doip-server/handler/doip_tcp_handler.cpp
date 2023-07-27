@@ -31,13 +31,14 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Trans
 DoipChannel &DoipTcpHandler::CreateDoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::uint16_t logical_address) {
   // create new doip channel
   doip_channel_list_.emplace(logical_address,
-                             std::make_unique<DoipChannel>(logical_address, *tcp_socket_handler_));
+                             std::make_unique<DoipChannel>(conversation, logical_address, *tcp_socket_handler_));
   return *doip_channel_list_[logical_address];
 }
 
-DoipChannel::DoipChannel(std::uint16_t logical_address,
-                                         ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler)
-    : logical_address_{logical_address},
+DoipChannel::DoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
+                         std::uint16_t logical_address, ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler)
+    : conversation_(conversation),
+      logical_address_{logical_address},
       tcp_socket_handler_{tcp_socket_handler},
       tcp_connection_{},
       exit_request_{false},
@@ -118,7 +119,7 @@ void DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
                                           tcp_rx_message->rxBuffer_.end());
   }
   // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
-  //   doip_connection_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+  //   conversation_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
   //                                           static_cast<uds_transport::UdsMessage::Address>(0),
   //                                           uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
   //                                           static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,

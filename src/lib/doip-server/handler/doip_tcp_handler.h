@@ -74,7 +74,9 @@ public:
   private:
     // Store the logical address
     std::uint16_t logical_address_;
-
+    // 
+    const std::shared_ptr<uds_transport::ConversionHandler> &conversation_;
+    
     // store the tcp socket handler reference
     ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
 

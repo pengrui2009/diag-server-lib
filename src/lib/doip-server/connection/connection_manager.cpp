@@ -25,10 +25,7 @@ DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::Conver
                                      std::string_view local_tcp_address, uint16_t tcp_port_num, std::uint16_t logical_address)
     : logical_address_(logical_address),
       uds_transport::Connection(1, conversion),
-      tcp_transport_handler_(std::make_unique<doip_handler::DoipTcpHandler>(local_tcp_address, tcp_port_num))
-      {
-
-      }
+      tcp_transport_handler_(std::make_unique<doip_handler::DoipTcpHandler>(local_tcp_address, tcp_port_num)) {}
     
 
 // Initialize
@@ -40,6 +37,7 @@ DoipTcpConnection::InitializationResult DoipTcpConnection::Initialize() {
 // Start the Tp Handlers
 void DoipTcpConnection::Start() {
     // tcp_transport_handler_->Start(); 
+    tcp_channel_ = tcp_transport_handler_->CreateDoipChannel(conversation_, logical_address_);
 }
 
 // Stop the Tp handlers
@@ -75,9 +73,9 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
                                    uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
                                    std::vector<uint8_t> payloadInfo) {
     // Send Indication to conversion
-    // return (conversation_->IndicateMessage(source_addr, target_addr, type, channel_id, size, priority, protocol_kind,
-                                        //  payloadInfo));
-    return {uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
+    return (tcp_channel_.IndicateMessage(source_addr, target_addr, type, channel_id, size, priority, protocol_kind,
+                                         payloadInfo));
+    // return {uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
 }
 
 // Function to transmit the uds message
@@ -85,7 +83,8 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Tr
     uds_transport::UdsMessageConstPtr message) {
     // uds_transport::ChannelID channel_id = 0;
     // return (tcp_transport_handler_->Transmit(std::move(message), 0));
-    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+    return (tcp_channel_.Transmit(std::move(message), 0));
+    // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
 // Hands over a valid message to conversion

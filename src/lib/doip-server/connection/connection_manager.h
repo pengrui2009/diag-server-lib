@@ -76,6 +76,8 @@ public:
 
 private:
   std::uint16_t logical_address_;
+  // doip channel
+  DoipChannel &tcp_channel_;
   // Tcp Transport Handler
   std::unique_ptr<doip_handler::DoipTcpHandler> tcp_transport_handler_;
 };
