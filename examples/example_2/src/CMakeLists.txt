@@ -7,7 +7,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-project(diag-server-example-1 LANGUAGES CXX)
+project(diag-client-example-2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,28 +29,30 @@ add_executable(${PROJECT_NAME}
         ${MAIN_SRCS}
         )
 
-# diag server lib headers
-set(diag_server_header_path ${CMAKE_CURRENT_SOURCE_DIR}/../../diag-server-lib/appl)
+# diag client lib headers
+set(diag_client_header_path ${CMAKE_CURRENT_SOURCE_DIR}/../../src/appl)
 
 # Src headers
 set(src_header_path src)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${src_header_path}
-        ${diag_server_header_path}
+        ${diag_client_header_path}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lib/doip-server/
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lib/boost-support
         )
 
 if (${ENABLE_WIN_SYSTEM} MATCHES "ON")
         # link all dynamic libraries
         target_link_libraries(${PROJECT_NAME} PRIVATE
-                diag-server
+                diag-client
                 Threads::Threads
                 libboost_system-mgw7-mt-s-x64-1_78.a
                 )
 else()
         #link target directory
         target_link_libraries(${PROJECT_NAME} PRIVATE
-                diag-server
+                diag-client
                 Threads::Threads
                 ${Boost_LIBRARIES}
                 )

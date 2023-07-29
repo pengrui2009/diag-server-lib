@@ -20,7 +20,7 @@ class VdMessage final : public uds_transport::UdsMessage {
 public:
   // ctor
   VdMessage(std::uint8_t preselection_mode, uds_transport::ByteVector& preselection_value,
-            std::string_view host_ip_address);
+            std::string_view remote_ip_address);
 
   // default ctor
   VdMessage() noexcept;
@@ -28,7 +28,7 @@ public:
   // dtor
   ~VdMessage() noexcept override = default;
 
-private:
+protected:
   // SA
   Address source_address_;
 
@@ -38,8 +38,11 @@ private:
   // TA type
   TargetAddressType target_address_type;
 
-  // Host Ip Address
-  IpAddress host_ip_address_;
+  // Remote Ip Address
+  IpAddress remote_ip_address_;
+
+  // Remote Port Number
+  PortNumber remote_port_number_;
 
   // store the vehicle info payload
   uds_transport::ByteVector vehicle_info_payload_;
@@ -52,7 +55,7 @@ private:
     // update meta info data
     if (meta_info != nullptr) {
       meta_info_ = meta_info;
-      host_ip_address_ = meta_info_->at("kRemoteIpAddress");
+      remote_ip_address_ = meta_info_->at("kRemoteIpAddress");
     }
   }
 
@@ -62,6 +65,9 @@ private:
   // return the underlying buffer for write access
   uds_transport::ByteVector& GetPayload() override { return vehicle_info_payload_; }
 
+  void SetPayload(const std::vector<uint8_t> &payload) noexcept override {
+    vehicle_info_payload_ = payload;
+  }
   // Get the source address of the uds message.
   Address GetSa() const noexcept override { return source_address_; }
 
@@ -71,11 +77,15 @@ private:
   // Get the target address type (phys/func) of the uds message.
   TargetAddressType GetTaType() const noexcept override { return target_address_type; }
 
-  // Get Host Ip address
-  IpAddress GetHostIpAddress() const noexcept override { return host_ip_address_; }
+  // Get Remote Ip address
+  IpAddress GetRemoteIpAddress() const noexcept override { return remote_ip_address_; }
 
-  // Get Host port number
-  PortNumber GetHostPortNumber() const noexcept override { return 13400U; }
+  void SetRemoteIpAddress(const IpAddress &ip_address) noexcept override { remote_ip_address_ = ip_address; }
+
+  // Get Remote port number
+  PortNumber GetRemotePortNumber() const noexcept override { return remote_port_number_; }
+
+  void SetRemotePortNumber(const PortNumber &port_number) noexcept {remote_port_number_ = port_number;}
 };
 
 }  // namespace vd_message

@@ -34,8 +34,7 @@ public:
   void DeInitialize() override;
 
   // Get Required Conversation based on Conversation Name
-  diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation(
-      std::string_view conversation_name) override;
+  diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation() override;
 
   // Send Vehicle Identification Request and get response
   std::pair<diag::server::DiagServer::VehicleResponseResult,

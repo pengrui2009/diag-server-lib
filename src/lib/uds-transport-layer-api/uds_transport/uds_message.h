@@ -20,7 +20,7 @@ public:
   // type for UDS source and target addresses
   using Address = std::uint16_t;
   // Ip address
-  using IpAddress = std::string_view;
+  using IpAddress = std::string;
   // Port Number
   using PortNumber = std::uint16_t;
   // Type for the meta information attached to a UdsMessage
@@ -51,6 +51,8 @@ public:
   // return the underlying buffer for write access
   virtual ByteVector &GetPayload() = 0;
 
+  virtual void SetPayload(const ByteVector &) noexcept = 0;
+
   // Get the source address of the uds message.
   virtual Address GetSa() const noexcept = 0;
 
@@ -60,11 +62,15 @@ public:
   // Get the target address type (phys/func) of the uds message.
   virtual TargetAddressType GetTaType() const noexcept = 0;
 
-  // Get Host Ip address
-  virtual IpAddress GetHostIpAddress() const noexcept = 0;
+  // Get Remote Ip address
+  virtual IpAddress GetRemoteIpAddress() const noexcept = 0;
 
-  // Get Host port number
-  virtual PortNumber GetHostPortNumber() const noexcept = 0;
+  virtual void SetRemoteIpAddress(const IpAddress &) noexcept = 0;
+
+  // Get Remote port number
+  virtual PortNumber GetRemotePortNumber() const noexcept = 0;
+
+  virtual void SetRemotePortNumber(const PortNumber &) noexcept = 0;
 };
 
 // This is the unique_ptr for constant UdsMessages

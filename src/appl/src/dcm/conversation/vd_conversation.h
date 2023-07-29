@@ -11,6 +11,10 @@
 /* includes */
 #include <chrono>
 #include <mutex>
+#include <queue>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 #include <string_view>
 
 #include "include/diagnostic_server.h"
@@ -19,6 +23,7 @@
 #include "uds_transport/connection.h"
 #include "uds_transport/conversion_handler.h"
 #include "uds_transport/protocol_types.h"
+
 
 namespace diag {
 namespace server {
@@ -63,6 +68,8 @@ public:
   VehicleIdentificationResponseResult SendVehicleIdentificationRequest(
       vehicle_info::VehicleInfoListRequestType vehicle_info_request);
 
+  void SendVehicleIdentificationResponse();
+
   // Get the list of available Diagnostic Server
   vehicle_info::VehicleInfoMessageResponseUniquePtr GetDiagnosticServerList();
 
@@ -72,6 +79,17 @@ public:
       ::uds_transport::UdsMessage::TargetAddressType type, ::uds_transport::ChannelID channel_id, std::size_t size,
       ::uds_transport::Priority priority, ::uds_transport::ProtocolKind protocol_kind,
       std::vector<uint8_t> payloadInfo);
+
+  auto VerifyVehicleIdentificationRequestWithExpectedVIN(
+    ::uds_transport::ByteVector &doip_payload, std::string vin) noexcept -> bool;
+
+  auto VerifyVehicleIdentificationRequestWithExpectedEID(
+    ::uds_transport::ByteVector &doip_payload, std::string eid) noexcept -> bool;
+
+  auto GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t;
+
+  auto GetDoIPPayloadLength(std::vector<uint8_t> payload) 
+    noexcept -> uint32_t;
 
   // Hands over a valid message to conversion
   void HandleMessage(::uds_transport::UdsMessagePtr message);
@@ -93,6 +111,15 @@ private:
   // shared pointer to store the conversion handler
   std::shared_ptr<::uds_transport::ConversionHandler> vd_conversion_handler_;
 
+  // VIN
+  std::string vin_name_;
+  // EID
+  std::string eid_name_;
+  // GID
+  std::string gid_name_;
+  // logical address
+  uint16_t logical_address_;
+
   // conversation name
   std::string conversation_name_;
 
@@ -107,6 +134,24 @@ private:
 
   // mutex to lock the vehicle info collection container
   std::mutex vehicle_info_container_mutex_;
+
+  // queue to hold task
+  std::queue<std::function<void(void)>> job_queue_;
+
+  // threading var
+  std::thread thread_;
+
+  // flag to terminate the thread
+  std::atomic_bool exit_request_;
+
+  // flag th start the thread
+  std::atomic_bool running_;
+
+  // conditional variable to block the thread
+  std::condition_variable cond_var_;
+    
+  // locking critical section
+  std::mutex mutex_;
 };
 
 /*

@@ -9,6 +9,7 @@
 #define DIAGNOSTIC_SERVER_LIB_APPL_SRC_DCM_CONVERSATION_DMCONVERSATION_H
 /* includes */
 #include <string_view>
+#include <queue>
 
 #include "include/diagnostic_server_conversation.h"
 #include "src/dcm/conversation/dm_conversation_state_impl.h"
@@ -17,8 +18,13 @@
 #include "uds_transport/protocol_types.h"
 #include "utility/sync_timer.h"
 
+#include "src/dcm/service/service_base.h"
+
 namespace diag {
 namespace server {
+
+
+
 namespace conversation {
 
 using ConversationState = conversation_state_impl::ConversationState;
@@ -45,6 +51,7 @@ public:
   // shutdown
   void Shutdown() override;
 
+  void RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> &);
   // Description   : Function to connect to Diagnostic Server
   // @param input  : Nothing
   // @return value : ConnectResult
@@ -63,6 +70,8 @@ public:
 
   // Register Connection
   void RegisterConnection(std::shared_ptr<::uds_transport::Connection> connection);
+
+  std::shared_ptr<::uds_transport::ConversionHandler> &GetConversationHandler();
 
   // Indicate message Diagnostic message reception over TCP to user
   std::pair<::uds_transport::UdsTransportProtocolMgr::IndicationResult, ::uds_transport::UdsMessagePtr> IndicateMessage(
@@ -112,7 +121,7 @@ private:
   // Reception buffer
   uint32_t rx_buffer_size_;
   // p2 client time
-  uint16_t p2_client_max_;
+  uint16_t p2_server_max_;
   // p2 star Client time
   uint16_t p2_star_client_max_;
   // logical Source address
@@ -125,6 +134,24 @@ private:
   std::string remote_address_;
   // conversion name
   std::string conversation_name_;
+  // queue to hold task
+  std::queue<std::function<void(void)>> job_queue_;
+
+  // threading var
+  std::thread thread_;
+
+  // flag to terminate the thread
+  std::atomic_bool exit_request_;
+
+  // flag th start the thread
+  std::atomic_bool running_;
+
+  // conditional variable to block the thread
+  std::condition_variable cond_var_;
+
+  // locking critical section
+  std::mutex mutex_;
+
   // Tp connection
   std::shared_ptr<::uds_transport::Connection> connection_ptr_;
   // timer
@@ -133,6 +160,9 @@ private:
   ::uds_transport::ByteVector payload_rx_buffer;
   // conversation state
   conversation_state_impl::ConversationStateImpl conversation_state_;
+
+  std::unordered_map<uint8_t, std::unique_ptr<ServiceBase> > uds_services_;
+  void Service();
 };
 
 /*

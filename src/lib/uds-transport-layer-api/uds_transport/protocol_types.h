@@ -35,12 +35,14 @@ using ConversionHandlerID = std::uint8_t;
 struct ConversionIdentifierType {
   // Reception buffer
   uint32_t rx_buffer_size{};
-  // p2 client time
-  uint16_t p2_client_max{};
-  // p2 star Client time
-  uint16_t p2_star_client_max{};
-  // source address of client
-  uint16_t source_address{};
+  // p2 Server time
+  uint16_t p2_server_max{};
+  // p2 star Server time
+  uint16_t p2_star_server_max{};
+  // p4 Server time
+  uint16_t p4_server_max{};
+  // logical address of server
+  uint16_t logical_address{};
   // self tcp address
   std::string tcp_address{};
   // self udp address
@@ -49,6 +51,13 @@ struct ConversionIdentifierType {
   std::string udp_broadcast_address{};
   // Port Number
   uint16_t port_num{};
+  // VIN
+  std::string vin_name;
+  // EID
+  std::string eid_name;
+  // GID
+  std::string gid_name;
+
   // conversion handler ID
   ConversionHandlerID handler_id{};
 };

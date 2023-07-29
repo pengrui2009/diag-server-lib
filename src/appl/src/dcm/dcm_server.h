@@ -13,6 +13,7 @@
 #include "src/common/diagnostic_manager.h"
 #include "src/dcm/config_parser/config_parser_type.h"
 #include "src/dcm/connection/uds_transport_protocol_manager.h"
+#include "src/dcm/conversation/dm_conversation.h"
 #include "src/dcm/conversation/vd_conversation.h"
 // #include "src/dcm/conversation/conversation_manager.h"
 
@@ -41,8 +42,7 @@ public:
   void Shutdown() override;
 
   // Function to get the diagnostic client conversation
-  diag::server::conversation::DiagServerConversation &ListenDiagnosticServerConversation(
-      std::string_view conversation_name) override;
+  diag::server::conversation::DiagServerConversation &StartDiagnosticServerConversation() override;
 
   // Send Vehicle Identification Request and get response
   std::pair<diag::server::DiagServer::VehicleResponseResult,
@@ -51,6 +51,7 @@ public:
       diag::server::vehicle_info::VehicleInfoListRequestType vehicle_info_request) override;
 
 private:
+  diag::server::config_parser::DCMServerConfig config;
   // uds transport protocol Manager
   std::unique_ptr<uds_transport::UdsTransportProtocolManager> uds_transport_protocol_mgr;
 
@@ -60,7 +61,7 @@ private:
   // map to store conversation pointer along with conversation name
   // std::unordered_map<std::string, std::unique_ptr<diag::server::conversation::DiagServerConversation>>
   //     diag_client_conversation_map;
-  std::unique_ptr<diag::server::conversation::DiagServerConversation> diag_server_conversation;
+  std::unique_ptr<diag::server::conversation::DmConversation> diag_server_conversation;
 
   // store the diag client conversation for vehicle discovery
   std::unique_ptr<diag::server::conversation::VdConversation> diag_server_vehicle_discovery_conversation;

@@ -12,6 +12,8 @@
 #include "src/common/logger.h"
 #include "src/dcm/service/dm_uds_message.h"
 
+#include "src/dcm/service/service_0x10.h"
+
 namespace diag {
 namespace server {
 namespace conversation {
@@ -23,18 +25,47 @@ DmConversation::DmConversation(std::string_view conversion_name,
       active_session_{SessionControlType::kDefaultSession},
       active_security_{SecurityLevelType::kLocked},
       rx_buffer_size_{conversion_identifier.rx_buffer_size},
-      p2_client_max_{conversion_identifier.p2_client_max},
-      p2_star_client_max_{conversion_identifier.p2_star_client_max},
-      source_address_{conversion_identifier.source_address},
+      p2_server_max_{conversion_identifier.p2_server_max},
+      p2_star_client_max_{conversion_identifier.p2_star_server_max},
+      source_address_{conversion_identifier.logical_address},
       target_address_{},
       conversation_name_{conversion_name},
-      dm_conversion_handler_{std::make_shared<DmConversationHandler>(conversion_identifier.handler_id, *this)} {}
+      exit_request_{false},
+      running_{false},
+      dm_conversion_handler_{std::make_shared<DmConversationHandler>(conversion_identifier.handler_id, *this)} {
+  
+  uds_services_[0x10] = std::make_unique<service::Service0x10>(*this);
+
+  // Start thread to receive messages
+  thread_ = std::thread([this]() {
+    std::unique_lock<std::mutex> lck(mutex_);
+    while (!exit_request_) {
+      if (!running_) {
+        cond_var_.wait(lck, [this]() { return exit_request_ || running_; });
+      }
+      if (!exit_request_.load()) {
+        if (running_) {
+          while (!job_queue_.empty()) {
+            std::function<void(void)> const job{job_queue_.front()};
+            job();
+            job_queue_.pop();
+          }
+        }
+      }
+    }
+  });
+}
 
 //dtor
 DmConversation::~DmConversation() = default;
 
+void DmConversation::RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> &service) {
+  uds_services_[sid] = std::move(service);
+}
+
 // startup
 void DmConversation::Startup() {
+
   // initialize the connection
   connection_ptr_->Initialize();
   // start the connection
@@ -151,7 +182,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
                 __FILE__, __LINE__, "", [&](std::stringstream &msg) {
                   msg << "'" << conversation_name_ << "'"
                       << "-> "
-                      << "Diagnostic Response P2 Timeout happened after " << p2_client_max_ << " milliseconds";
+                      << "Diagnostic Response P2 Timeout happened after " << p2_server_max_ << " milliseconds";
                 });
           },
           [&]() {
@@ -165,7 +196,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
               conversation_state_.GetConversationStateContext().TransitionTo(ConversationState::kDiagStartP2StarTimer);
             }
           },
-          p2_client_max_);
+          p2_server_max_);
 
       // Wait until final response or timeout
       while (conversation_state_.GetConversationStateContext().GetActiveState().GetState() !=
@@ -239,6 +270,10 @@ void DmConversation::RegisterConnection(std::shared_ptr<uds_transport::Connectio
   connection_ptr_ = std::move(connection);
 }
 
+std::shared_ptr<::uds_transport::ConversionHandler> &DmConversation::GetConversationHandler() {
+  return dm_conversion_handler_;
+}
+
 // Indicate message Diagnostic message reception over TCP to user
 std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
 DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
@@ -248,6 +283,13 @@ DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
                                 uds_transport::ProtocolKind protocol_kind, std::vector<uint8_t> payload_info) {
   std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
       uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
+
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+            __FILE__, __LINE__, "", [&](std::stringstream &msg) {
+              msg << "'" << conversation_name_ << "'"
+                  << "-> "
+                  << "DmConversation::IndicateMessage";
+            });
   // Verify the payload received :-
   if (!payload_info.empty()) {
     // Check for size, else kIndicationOverflow
@@ -296,9 +338,19 @@ DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
               << "Diagnostic Conversation Rx Payload size 0 received";
         });
   }
+
+  uint8_t sid = 0x10;
+  job_queue_.emplace([this, sid]() { this->uds_services_[sid]->Service(); });
+  
+  running_ = true;
+  cond_var_.notify_all();
+
   return ret_val;
 }
 
+void DmConversation::Service() {
+
+}
 // Hands over a valid message to conversion
 void DmConversation::HandleMessage(uds_transport::UdsMessagePtr message) {
   if (message != nullptr) {

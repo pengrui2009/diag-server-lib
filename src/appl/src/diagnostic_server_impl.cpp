@@ -55,9 +55,8 @@ void DiagServerImpl::DeInitialize() {
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "DiagServer De-Initialization completed"; });
 }
 
-diag::server::conversation::DiagServerConversation &DiagServerImpl::StartDiagnosticServerConversation(
-    std::string_view conversation_name) {
-  return (dcm_instance_ptr->ListenDiagnosticServerConversation(conversation_name));
+diag::server::conversation::DiagServerConversation &DiagServerImpl::StartDiagnosticServerConversation() {
+  return (dcm_instance_ptr->StartDiagnosticServerConversation());
 }
 
 std::pair<diag::server::DiagServer::VehicleResponseResult,

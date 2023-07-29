@@ -6,7 +6,7 @@
       "ConversationProperty": [
         {
           "p2ClientMax": 1000,
-          "p2StarClientMax": 5000,
+          "p2StarServerMax": 5000,
           "RxBufferSize": 4095,
           "SourceAddress": 1,
           "TargetAddressType": "Physical",
@@ -19,7 +19,7 @@
         },
         {
           "p2ClientMax": 2000,
-          "p2StarClientMax": 5000,
+          "p2StarServerMax": 5000,
           "RxBufferSize": 4095,
           "SourceAddress": 2,
           "TargetAddressType": "Functional",

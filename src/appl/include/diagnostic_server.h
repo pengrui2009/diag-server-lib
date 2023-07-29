@@ -88,8 +88,7 @@ public:
    * @remarks     Implemented requirements:
    *              DiagServerLib-MultipleTester-Connection, DiagServerLib-Conversation-Construction
    */
-  virtual diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation(
-      std::string_view conversation_name) = 0;
+  virtual diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation() = 0;
 };
 
 }  // namespace server

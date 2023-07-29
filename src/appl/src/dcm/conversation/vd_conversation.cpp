@@ -14,6 +14,9 @@
 
 #include "src/common/logger.h"
 #include "src/dcm/service/vd_message.h"
+#include "common/doip_payload_type.h"
+#include "common/common_doip_types.h"
+#include "uds_transport/uds_message.h"
 
 namespace diag {
 namespace server {
@@ -53,8 +56,8 @@ std::string ConvertToAsciiString(std::uint8_t char_start, std::uint8_t char_coun
 
 void SerializeEIDGIDFromString(std::string &input_string, std::vector<uint8_t> &output_buffer, std::uint8_t total_size,
                                std::uint8_t substring_range) {
-
-  for (auto char_count = 0U; char_count < total_size; char_count += substring_range) {
+                         
+  for (auto char_count = 0U; char_count < total_size; char_count += substring_range+1) {
     std::string input_string_new{input_string.substr(char_count, static_cast<std::uint8_t>(substring_range))};
     std::stringstream input_string_stream{input_string_new};
     int get_byte;
@@ -102,12 +105,37 @@ private:
 // Conversation class
 VdConversation::VdConversation(std::string_view conversion_name,
                                uds_transport::conversion_manager::ConversionIdentifierType &conversion_identifier)
-    : vd_conversion_handler_{std::make_shared<VdConversationHandler>(conversion_identifier.handler_id, *this)},
+    : vin_name_{conversion_identifier.vin_name},
+      eid_name_{conversion_identifier.eid_name},
+      gid_name_{conversion_identifier.gid_name},
+      logical_address_{conversion_identifier.logical_address},
+      vd_conversion_handler_{std::make_shared<VdConversationHandler>(conversion_identifier.handler_id, *this)},
       conversation_name_{conversion_name},
       broadcast_address_{conversion_identifier.udp_broadcast_address},
       connection_ptr_{},
       vehicle_info_collection_{},
-      vehicle_info_container_mutex_{} {}
+      exit_request_{false},
+      running_{false},
+      vehicle_info_container_mutex_{} {
+  // Start thread to receive messages
+  thread_ = std::thread([this]() {
+    std::unique_lock<std::mutex> lck(mutex_);
+    while (!exit_request_) {
+      if (!running_) {
+        cond_var_.wait(lck, [this]() { return exit_request_ || running_; });
+      }
+      if (!exit_request_.load()) {
+        if (running_) {
+          while (!job_queue_.empty()) {
+            std::function<void(void)> const job{job_queue_.front()};
+            job();
+            job_queue_.pop();
+          }
+        }
+      }
+    }
+  });
+}
 
 void VdConversation::Startup() {
   // initialize the connection
@@ -123,6 +151,61 @@ void VdConversation::Shutdown() {
 
 void VdConversation::RegisterConnection(std::shared_ptr<uds_transport::Connection> connection) {
   connection_ptr_ = std::move(connection);
+}
+
+void VdConversation::SendVehicleIdentificationResponse() {
+  uds_transport::UdsMessagePtr vehicle_identification_response{
+      std::make_unique<vd_message::VdMessage>()};
+  // create header
+  // vehicle_identification_response->tx_buffer_.reserve(kDoipheadrSize + kDoip_VehicleAnnouncement_ResMaxLen);
+  // CreateDoipGenericHeader(vehicle_identification_response->tx_buffer_, kDoip_VehicleAnnouncement_ResType,
+  //                         kDoip_VehicleAnnouncement_ResMaxLen);
+  // vin
+  std::vector<uint8_t> vehicle_info_payload;
+  std::vector<uint8_t> vin_payload;
+  SerializeVINFromString(vin_name_, vin_payload, vin_name_.length(), 1U);
+  vehicle_info_payload.insert(vehicle_info_payload.begin(), vin_payload.begin(), vin_payload.end());
+  // logical address
+  vehicle_info_payload.emplace_back(logical_address_ >> 8U);
+  vehicle_info_payload.emplace_back(logical_address_ & 0xFFU);
+  // eid
+  std::vector<uint8_t> eid_payload;
+  SerializeEIDGIDFromString(eid_name_, eid_payload, eid_name_.length(), 2U);
+  vehicle_info_payload.insert(vehicle_info_payload.begin()+vehicle_info_payload.size(), eid_payload.begin(), 
+    eid_payload.end());
+  // gid
+  std::vector<uint8_t> gid_payload;
+  SerializeEIDGIDFromString(gid_name_, gid_payload, gid_name_.length(), 2U);
+  vehicle_info_payload.insert(vehicle_info_payload.begin()+vehicle_info_payload.size(), gid_payload.begin(), 
+    gid_payload.end());
+
+  vehicle_info_payload.push_back(0x00);
+  vehicle_info_payload.push_back(0x00);
+
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+        __FILE__, __LINE__, "", [eid_payload, gid_payload, &vehicle_info_payload](std::stringstream &msg) {
+          msg << "VdConversation::SendVehicleIdentificationResponse eid_payload size:" << eid_payload.size()
+              << "gid_payload size:" << gid_payload.size() 
+              << "payloadInfo size:" << vehicle_info_payload.size() << " data:";
+          for (int i=0; i<vehicle_info_payload.size(); i++) {
+            msg<< static_cast<int>(vehicle_info_payload[i]) << " ";
+          }
+        });
+  vehicle_identification_response->SetPayload(vehicle_info_payload);                            
+  // set remote ip
+  vehicle_identification_response->SetRemoteIpAddress("");//remote_ip_address_ = received_doip_message_.host_ip_address;
+  // set remote port
+  vehicle_identification_response->SetRemotePortNumber(0);// remote_port_num_ = received_doip_message_.port_num;
+
+  //  set further action required
+  // vehicle_identification_response->tx_buffer_.emplace_back(0U);
+
+  uds_transport::UdsTransportProtocolMgr::TransmissionResult result = 
+    connection_ptr_->Transmit(std::move(vehicle_identification_response));
+  if (uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk == result) {
+    running_ = false; 
+  }
+
 }
 
 VdConversation::VehicleIdentificationResponseResult VdConversation::SendVehicleIdentificationRequest(
@@ -156,16 +239,129 @@ VdConversation::VehicleIdentificationResponseResult VdConversation::SendVehicleI
 
 vehicle_info::VehicleInfoMessageResponseUniquePtr VdConversation::GetDiagnosticServerList() { return nullptr; }
 
+auto VdConversation::GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t {
+  return ((uint16_t) (((payload[BYTE_POS_TWO] & 0xFF) << 8) | (payload[BYTE_POS_THREE] & 0xFF)));
+}
+
+auto VdConversation::GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t {
+  return ((uint32_t) ((payload[BYTE_POS_FOUR] << 24U) & 0xFF000000) |
+          (uint32_t) ((payload[BYTE_POS_FIVE] << 16U) & 0x00FF0000) |
+          (uint32_t) ((payload[BYTE_POS_SIX] << 8U) & 0x0000FF00) |
+          (uint32_t) ((payload[BYTE_POS_SEVEN] & 0x000000FF)));
+}
+
+auto VdConversation::VerifyVehicleIdentificationRequestWithExpectedVIN(uds_transport::ByteVector &doip_payload, 
+  std::string vin) noexcept -> bool {
+  constexpr std::uint8_t start_index_vin{0U};
+  std::string vehicle_info_data_vin{
+      ConvertToAsciiString(start_index_vin, doip_payload.size(), doip_payload)};
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+        __FILE__, __LINE__, "", [vehicle_info_data_vin, vin](std::stringstream &msg) {
+          msg << "VdConversation::VerifyVehicleIdentificationRequestWithExpectedVIN vin_in:" << vehicle_info_data_vin.size() 
+              << " vin:" << vin.size();
+        });
+  return (vehicle_info_data_vin == vin);
+}
+
+auto VdConversation::VerifyVehicleIdentificationRequestWithExpectedEID(uds_transport::ByteVector &doip_payload,
+  std::string eid) noexcept -> bool {
+  constexpr std::uint8_t start_index_eid{0U};
+  std::string vehicle_info_data_eid{
+      ConvertToHexString(start_index_eid, doip_payload.size(), doip_payload)};
+  return (vehicle_info_data_eid == eid);
+}
+
+
 std::pair<VdConversation::IndicationResult, uds_transport::UdsMessagePtr> VdConversation::IndicateMessage(
     uds_transport::UdsMessage::Address /* source_addr */, uds_transport::UdsMessage::Address /* target_addr */,
     uds_transport::UdsMessage::TargetAddressType /* type */, uds_transport::ChannelID channel_id, std::size_t size,
     uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind, std::vector<uint8_t> payloadInfo) {
   std::pair<IndicationResult, uds_transport::UdsMessagePtr> ret_val{IndicationResult::kIndicationNOk, nullptr};
-  if (!payloadInfo.empty()) {
-    ret_val.first = IndicationResult::kIndicationOk;
-    ret_val.second = std::move(std::make_unique<diag::server::vd_message::VdMessage>());
-    ret_val.second->GetPayload().resize(size);
+
+  DoipMessage receive_message;
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+        __FILE__, __LINE__, "", [&payloadInfo](std::stringstream &msg) {
+          msg << "VdConversation::IndicateMessage payloadInfo size:" << payloadInfo.size() << " data:";
+          for (int i=0; i<payloadInfo.size(); i++) {
+            msg<< static_cast<int>(payloadInfo[i]) << " ";
+          }
+        });
+  
+  // receive_message.host_ip_address = udp_rx_message->host_ip_address_;
+  // receive_message.port_num = udp_rx_message->host_port_num_;
+  receive_message.protocol_version = payloadInfo[0];
+  receive_message.protocol_version_inv = payloadInfo[1];
+  receive_message.payload_type = GetDoIPPayloadType(payloadInfo);
+  receive_message.payload_length = GetDoIPPayloadLength(payloadInfo);
+
+  if (receive_message.payload_length > 0U) {    
+    // receive_message.payload.resize(receive_message.payload_length);
+    receive_message.payload.insert(receive_message.payload.begin(), 
+      payloadInfo.begin() + kDoipheadrSize, payloadInfo.end());
+    
+    switch (receive_message.payload_type) {
+    case 0U:
+      break;
+    case 1U:
+      break;
+    case 2U:
+      break;
+    case 3U:
+      if (VerifyVehicleIdentificationRequestWithExpectedVIN(receive_message.payload, vin_name_)) {
+        logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, "", [&payloadInfo](std::stringstream &msg) {
+            msg << "VdConversation::VerifyVehicleIdentificationRequestWithExpectedVIN success";
+          });
+          job_queue_.emplace([this]() { this->SendVehicleIdentificationResponse(); });
+          running_ = true;
+          cond_var_.notify_all();
+      } else {
+        logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, "", [&payloadInfo](std::stringstream &msg) {
+            msg << "VdConversation::VerifyVehicleIdentificationRequestWithExpectedVIN failed";
+          });
+      }
+      
+      break;
+    case 4U:
+      break;
+    default:
+      break;
+    }
   }
+  
+  // {
+  //   UdpMessagePtr vehicle_identification_response{std::make_unique<UdpMessage>()};
+  //   // create header
+  //   vehicle_identification_response->tx_buffer_.reserve(kDoipheadrSize + kDoip_VehicleAnnouncement_ResMaxLen);
+  //   CreateDoipGenericHeader(vehicle_identification_response->tx_buffer_, kDoip_VehicleAnnouncement_ResType,
+  //                           kDoip_VehicleAnnouncement_ResMaxLen);
+  //   // vin
+  //   SerializeVINFromString(expected_vehicle_info_.vin, vehicle_identification_response->tx_buffer_,
+  //                         expected_vehicle_info_.vin.length(), 1U);
+  //   // logical address
+  //   vehicle_identification_response->tx_buffer_.emplace_back(expected_vehicle_info_.logical_address >> 8U);
+  //   vehicle_identification_response->tx_buffer_.emplace_back(expected_vehicle_info_.logical_address & 0xFFU);
+  //   // eid
+  //   SerializeEIDGIDFromString(expected_vehicle_info_.eid, vehicle_identification_response->tx_buffer_,
+  //                             expected_vehicle_info_.eid.length(), 2U);
+  //   // gid
+  //   SerializeEIDGIDFromString(expected_vehicle_info_.gid, vehicle_identification_response->tx_buffer_,
+  //                             expected_vehicle_info_.eid.length(), 2U);
+  //   // set remote ip
+  //   vehicle_identification_response->host_ip_address_ = received_doip_message_.host_ip_address;
+  //   // set remote port
+  //   vehicle_identification_response->host_port_num_ = received_doip_message_.port_num;
+
+  //   //  set further action required
+  //   vehicle_identification_response->tx_buffer_.emplace_back(0U);
+
+  //   if (udp_socket_handler_unicast_.Transmit(std::move(vehicle_identification_response))) 
+  //   { 
+  //     running_ = false; 
+  //   }
+  // }
+
   return ret_val;
 }
 
@@ -218,7 +414,7 @@ std::pair<std::uint16_t, VdConversation::VehicleAddrInfoResponseStruct> VdConver
       (static_cast<std::uint16_t>(((message->GetPayload()[17U] & 0xFF) << 8) | (message->GetPayload()[18U] & 0xFF)))};
 
   // Create the structure out of the extracted string
-  VehicleAddrInfoResponseStruct vehicle_addr_info{std::string{message->GetHostIpAddress()},  // remote ip address
+  VehicleAddrInfoResponseStruct vehicle_addr_info{std::string{message->GetRemoteIpAddress()},  // remote ip address
                                                   logical_address,                           // logical address
                                                   vehicle_info_data_vin,                     // vin
                                                   vehicle_info_data_eid,                     // eid

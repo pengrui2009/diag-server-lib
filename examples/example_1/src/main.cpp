@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#include <unistd.h>
+
 #include "uds_message.h"
 
 // includes from diag-client library
@@ -23,7 +25,7 @@
 int main() {
   // Create the Diagnostic client and pass the config for creating internal properties
   std::unique_ptr<diag::server::DiagServer> diag_server{
-      diag::server::CreateDiagnosticServer("etc/diag_client_config.json")};
+      diag::server::CreateDiagnosticServer("etc/diag_server_config.json")};
 
   // Initialize the Diagnostic Server library
   diag_server->Initialize();
@@ -31,8 +33,9 @@ int main() {
   // Get conversation for tester one by providing the conversation name configured
   // in diag_client_config file passed while creating the diag client
   diag::server::conversation::DiagServerConversation &diag_server_conversation {
-      diag_server->StartDiagnosticServerConversation("DiagTesterOne")};
-
+      diag_server->StartDiagnosticServerConversation()};
+  
+  sleep(1000000);
   // Start the conversation for tester one
   diag_server_conversation.Startup();
 

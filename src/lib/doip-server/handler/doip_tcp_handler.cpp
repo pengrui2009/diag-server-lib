@@ -28,19 +28,19 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Trans
     return (doip_channel_list_[logical_address]->Transmit(std::move(message)));  
 }
 
-DoipChannel &DoipTcpHandler::CreateDoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::uint16_t logical_address) {
+DoipChannel &DoipTcpHandler::CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection) {
   // create new doip channel
   doip_channel_list_.emplace(logical_address,
-                             std::make_unique<DoipChannel>(conversation, logical_address, *tcp_socket_handler_));
+                             std::make_unique<DoipChannel>(tcp_connection, logical_address, *tcp_socket_handler_));
   return *doip_channel_list_[logical_address];
 }
 
-DoipChannel::DoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
+DoipChannel::DoipChannel(connection::DoipTcpConnection &tcp_connection, 
                          std::uint16_t logical_address, ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler)
-    : conversation_(conversation),
-      logical_address_{logical_address},
+    : logical_address_{logical_address},
       tcp_socket_handler_{tcp_socket_handler},
-      tcp_connection_{},
+      tcp_connection_{tcp_connection},
+      tcp_connection_handler_{},
       exit_request_{false},
       running_{false},
       routing_activation_res_code_{kDoip_RoutingActivation_ResCode_RoutingSuccessful},
@@ -83,17 +83,17 @@ void DoipChannel::Initialize() {
 }
 
 void DoipChannel::DeInitialize() {
-  if (tcp_connection_) { tcp_connection_->DeInitialize(); }
+  if (tcp_connection_handler_) { tcp_connection_handler_->DeInitialize(); }
 }
 
 void DoipChannel::StartAcceptingConnection() {
   // Get the tcp connection - this will return after client is connected
-  tcp_connection_ = std::move(tcp_socket_handler_.CreateTcpConnection([this](TcpMessagePtr tcp_rx_message) {
+  tcp_connection_handler_ = std::move(tcp_socket_handler_.CreateTcpConnection([this](TcpMessagePtr tcp_rx_message) {
     // handle message
     this->HandleMessage(std::move(tcp_rx_message));
   }));
-  if (tcp_connection_) {
-    tcp_connection_->Initialize();
+  if (tcp_connection_handler_) {
+    tcp_connection_handler_->Initialize();
     running_ = false;
   }
 }
@@ -101,9 +101,28 @@ void DoipChannel::StartAcceptingConnection() {
 // Function to transmit the uds message
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipChannel::Transmit(
   uds_transport::UdsMessageConstPtr message) {
-  // tcp_connection_->Transmit(std::move(message));
   // TODO
-  return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+  return tcp_connection_.Transmit(std::move(message));
+  // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+}
+
+std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+      DoipChannel::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+                                   uds_transport::UdsMessage::Address target_addr,
+                                   uds_transport::UdsMessage::TargetAddressType type,
+                                   uds_transport::ChannelID channel_id, std::size_t size,
+                                   uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+                                   std::vector<uint8_t> payloadInfo) {
+  std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret = {
+    uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
+  
+  tcp_connection_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+                                    static_cast<uds_transport::UdsMessage::Address>(0),
+                                    uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
+                                    static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
+                                    "DoIPTcp", received_doip_message_.payload);
+
+  return ret;
 }
 
 void DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
@@ -118,12 +137,14 @@ void DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
                                           tcp_rx_message->rxBuffer_.begin() + kDoipheadrSize,
                                           tcp_rx_message->rxBuffer_.end());
   }
-  // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
-  //   conversation_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
-  //                                           static_cast<uds_transport::UdsMessage::Address>(0),
-  //                                           uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
-  //                                           static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
-  //                                           "DoIPTcp", received_doip_message_.payload)};
+
+  std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
+  IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+                                    static_cast<uds_transport::UdsMessage::Address>(0),
+                                    uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
+                                    static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
+                                    "DoIPTcp", received_doip_message_.payload)};
+
   // Trigger async transmission
   {
     std::lock_guard<std::mutex> const lck{mutex_};
@@ -137,6 +158,8 @@ void DoipChannel::HandleMessage(TcpMessagePtr tcp_rx_message) {
     running_ = true;
   }
   cond_var_.notify_all();
+
+  
 }
 
 auto DoipChannel::GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t {
@@ -182,7 +205,7 @@ void DoipChannel::SendRoutingActivationResponse() {
   routing_activation_response->txBuffer_.emplace_back(0x00);
   routing_activation_response->txBuffer_.emplace_back(0x00);
 
-  if (tcp_connection_->Transmit(std::move(routing_activation_response))) { running_ = false; }
+  if (tcp_connection_handler_->Transmit(std::move(routing_activation_response))) { running_ = false; }
 }
 
 void DoipChannel::SendDiagnosticMessageAckResponse() {
@@ -207,7 +230,7 @@ void DoipChannel::SendDiagnosticMessageAckResponse() {
   // activation response code
   diag_msg_ack_response->txBuffer_.emplace_back(diag_msg_ack_code_);
 
-  if (tcp_connection_->Transmit(std::move(diag_msg_ack_response))) {
+  if (tcp_connection_handler_->Transmit(std::move(diag_msg_ack_response))) {
     // Check for diag message ack code
     if (diag_msg_ack_code_ == kDoip_DiagnosticMessage_PosAckCode_Confirm) {
       ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
@@ -262,7 +285,7 @@ void DoipChannel::SendDiagnosticMessageResponse() {
       diag_uds_message_response->txBuffer_.begin() + kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen,
       uds_response_payload_.begin(), uds_response_payload_.end());
 
-  if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
+  if (tcp_connection_handler_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
     ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Response message success";
@@ -292,7 +315,7 @@ void DoipChannel::SendDiagnosticPendingMessageResponse() {
       diag_uds_message_response->txBuffer_.begin() + kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen,
       uds_pending_response_payload_.begin(), uds_pending_response_payload_.end());
 
-  if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
+  if (tcp_connection_handler_->Transmit(std::move(diag_uds_message_response))) {
     running_ = false;
     ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
       msg << "Sending of Diagnostic Pending Response message success";

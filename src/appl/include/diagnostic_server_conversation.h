@@ -15,6 +15,8 @@
 #include <cstdint>
 
 #include "diagnostic_server_uds_message_type.h"
+// #include "uds_transport/connection.h"
+// #include "uds_transport/conversion_handler.h"
 
 namespace diag {
 namespace server {
@@ -130,6 +132,12 @@ public:
    */
   virtual std::pair<DiagResult, uds_message::UdsResponseMessagePtr> SendDiagnosticRequest(
       uds_message::UdsRequestMessageConstPtr message) = 0;
+
+  // Register Connection
+  // virtual void RegisterConnection(std::shared_ptr<::uds_transport::Connection> connection) = 0;
+
+  // virtual std::shared_ptr<::uds_transport::ConversionHandler> &GetConversationHandler() = 0;
+  
 };
 }  // namespace conversation
 }  // namespace server

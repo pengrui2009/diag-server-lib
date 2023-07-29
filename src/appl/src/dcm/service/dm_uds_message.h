@@ -51,6 +51,8 @@ private:
   // return the underlying buffer for write access
   uds_transport::ByteVector &GetPayload() override { return uds_payload_; }
 
+  void SetPayload(const std::vector<uint8_t> &payload) noexcept override {uds_payload_ = payload;}
+
   // Get the source address of the uds message.
   Address GetSa() const noexcept override { return source_address_; }
 
@@ -60,11 +62,14 @@ private:
   // Get the target address type (phys/func) of the uds message.
   TargetAddressType GetTaType() const noexcept override { return target_address_type_; }
 
+  void SetRemoteIpAddress(const IpAddress &ipaddr) noexcept override { host_ip_address_ = ipaddr;}
   // Get Host Ip address
-  IpAddress GetHostIpAddress() const noexcept override { return host_ip_address_; }
+  IpAddress GetRemoteIpAddress() const noexcept override { return host_ip_address_; }
 
   // Get Host port number
-  PortNumber GetHostPortNumber() const noexcept override { return 13400U; }
+  PortNumber GetRemotePortNumber() const noexcept override { return 13400U; }
+
+  void SetRemotePortNumber(const PortNumber &portnum) noexcept override { }
 };
 
 class DmUdsResponse final : public UdsMessage {
@@ -84,6 +89,7 @@ private:
 
   // return the underlying buffer for write access
   ByteVector &GetPayload() override { return uds_payload_; }
+
 
   // Get Host Ip address
   IpAddress GetHostIpAddress() const noexcept override { return host_ip_address_; }

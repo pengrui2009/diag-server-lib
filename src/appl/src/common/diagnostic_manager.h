@@ -54,8 +54,7 @@ public:
   virtual void Shutdown() = 0;
 
   // Function to get the diagnostic client conversation
-  virtual diag::server::conversation::DiagServerConversation &ListenDiagnosticServerConversation(
-      std::string_view conversation_name) = 0;
+  virtual diag::server::conversation::DiagServerConversation &StartDiagnosticServerConversation() = 0;
 
   // Send Vehicle Identification Request and get response
   virtual std::pair<diag::server::DiagServer::VehicleResponseResult,

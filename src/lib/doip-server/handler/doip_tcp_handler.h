@@ -42,7 +42,8 @@ public:
   using DoipChannelReadCallback = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpHandlerRead;
 
 public:
-    DoipChannel(std::uint16_t logical_address, ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler);
+    DoipChannel(connection::DoipTcpConnection &tcp_connection, std::uint16_t logical_address, 
+      ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler);
 
     ~DoipChannel();
 
@@ -55,6 +56,14 @@ public:
     // Function to transmit the uds message
     uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
       uds_transport::UdsMessageConstPtr message);
+
+    std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+      IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+                                   uds_transport::UdsMessage::Address target_addr,
+                                   uds_transport::UdsMessage::TargetAddressType type,
+                                   uds_transport::ChannelID channel_id, std::size_t size,
+                                   uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+                                   std::vector<uint8_t> payloadInfo);
 
     // Function to Hand over all the message received
     void HandleMessage(TcpMessagePtr tcp_rx_message);
@@ -74,14 +83,17 @@ public:
   private:
     // Store the logical address
     std::uint16_t logical_address_;
+
+    connection::DoipTcpConnection &tcp_connection_;
+
     // 
-    const std::shared_ptr<uds_transport::ConversionHandler> &conversation_;
+    // const std::shared_ptr<uds_transport::ConversionHandler> &conversation_;
     
     // store the tcp socket handler reference
     ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
 
     // Tcp connection to handler tcp req and response
-    std::unique_ptr<TcpConnectionHandler> tcp_connection_;
+    std::unique_ptr<TcpConnectionHandler> tcp_connection_handler_;
 
     // flag to terminate the thread
     std::atomic_bool exit_request_;
@@ -165,14 +177,14 @@ public:
     uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
 
   // Function to create doip channel
-  DoipChannel &CreateDoipChannel(const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::uint16_t logical_address);
+  DoipChannel &CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection);
 
 private:
   // reference to doip connection
   // doip_server::connection::DoipTcpConnection &doip_connection_;
   // Store the conversion
   // const std::shared_ptr<ConversionHandler> &conversation_;
-
+  // 
   // tcp socket handler
   std::unique_ptr<::doip_handler::tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
 
