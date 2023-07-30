@@ -19,6 +19,8 @@ namespace uds_message {
 class DmUdsMessage final : public uds_transport::UdsMessage {
 public:
   // ctor
+  DmUdsMessage();
+
   DmUdsMessage(Address sa, Address ta, IpAddress host_ip_address, uds_transport::ByteVector &payload);
 
   // dtor
@@ -38,7 +40,7 @@ private:
   std::string host_ip_address_;
 
   // store only UDS payload to be sent
-  uds_transport::ByteVector &uds_payload_;
+  uds_transport::ByteVector uds_payload_;
 
   // add new metaInfo to this message.
   void AddMetaInfo(std::shared_ptr<const MetaInfoMap> meta_info) override {

@@ -80,8 +80,8 @@ private:
   std::uint16_t logical_address_;
   // doip channel
   doip_handler::DoipChannel &tcp_channel_;
-  // // Tcp Transport Handler
-  // std::unique_ptr<doip_handler::DoipTcpHandler> tcp_transport_handler_;
+  // Tcp Transport Handler
+  doip_handler::DoipTcpHandler &tcp_transport_handler_;
 };
 
 /*

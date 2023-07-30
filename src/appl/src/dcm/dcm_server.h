@@ -41,6 +41,8 @@ public:
   // Shutdown
   void Shutdown() override;
 
+  void RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> );
+
   // Function to get the diagnostic client conversation
   diag::server::conversation::DiagServerConversation &StartDiagnosticServerConversation() override;
 

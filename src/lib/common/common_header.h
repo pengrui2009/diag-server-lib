@@ -28,14 +28,14 @@
 #include <vector>
 
 /* Magic numbers */
-constexpr uint8_t BYTE_POS_ZERO = 0x00;
-constexpr uint8_t BYTE_POS_ONE = 0x01;
-constexpr uint8_t BYTE_POS_TWO = 0x02;
-constexpr uint8_t BYTE_POS_THREE = 0x03;
-constexpr uint8_t BYTE_POS_FOUR = 0x04;
-constexpr uint8_t BYTE_POS_FIVE = 0x05;
-constexpr uint8_t BYTE_POS_SIX = 0x06;
-constexpr uint8_t BYTE_POS_SEVEN = 0x07;
+// constexpr uint8_t BYTE_POS_ZERO = 0x00;
+// constexpr uint8_t BYTE_POS_ONE = 0x01;
+// constexpr uint8_t BYTE_POS_TWO = 0x02;
+// constexpr uint8_t BYTE_POS_THREE = 0x03;
+// constexpr uint8_t BYTE_POS_FOUR = 0x04;
+// constexpr uint8_t BYTE_POS_FIVE = 0x05;
+// constexpr uint8_t BYTE_POS_SIX = 0x06;
+// constexpr uint8_t BYTE_POS_SEVEN = 0x07;
 
 typedef enum { E_OK = 0x00, E_NOT_OK, E_BUSY } Std_ReturnType;
 #endif  // COMMON_HEADER_H

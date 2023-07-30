@@ -10,6 +10,13 @@
 namespace diag {
 namespace server {
 namespace uds_message {
+
+DmUdsMessage::DmUdsMessage() :
+  uds_transport::UdsMessage(),
+  uds_payload_{} {
+
+} 
+
 DmUdsMessage::DmUdsMessage(Address sa, Address ta, IpAddress host_ip_address, uds_transport::ByteVector &payload)
     : uds_transport::UdsMessage(),
       source_address_{sa},

@@ -33,7 +33,169 @@ using TcpMessage = ::doip_handler::tcpSocket::TcpMessage;
 using TcpMessagePtr = ::doip_handler::tcpSocket::TcpMessagePtr;
 using TcpMessageConstPtr = ::doip_handler::tcpSocket::TcpMessageConstPtr;
 
+
 class DoipTcpHandler;
+class DoipChannelHandlerImpl;
+/*
+ @ Class Name        : RoutingActivationHandler
+ @ Class Description : Class used as a handler to process routing activation messages
+ */
+class RoutingActivationHandler {
+public:
+  // strong type holding activation type
+  struct RoutingActivationAckType {
+    std::uint8_t act_type_;
+  };
+
+public:
+  // ctor
+  RoutingActivationHandler(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
+      DoipChannelHandlerImpl &tcp_channel_handler_impl)
+      : tcp_socket_handler_{tcp_socket_handler},
+        tcp_channel_handler_impl_{tcp_channel_handler_impl} {}
+
+  // dtor
+  ~RoutingActivationHandler() = default;
+
+  // Function to process Routing activation request
+  auto ProcessDoIPRoutingActivationRequest(DoipMessage &doip_payload) noexcept -> void;
+
+  // Function to send Routing activation response
+  auto SendRoutingActivationResponse(uds_transport::UdsMessageConstPtr &message) noexcept
+      -> uds_transport::UdsTransportProtocolMgr::TransmissionResult;
+
+private:
+  void CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, uint16_t payloadType, uint32_t payloadLen);
+
+private:
+  // socket reference
+  ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
+  // channel reference
+  DoipChannelHandlerImpl &tcp_channel_handler_impl_;
+};
+
+/*
+ @ Class Name        : DiagnosticMessageHandler
+ @ Class Description : Class used as a handler to process diagnostic messages
+ */
+class DiagnosticMessageHandler {
+public:
+  // strong type acknowledgement type
+  struct DiagAckType {
+    std::uint8_t ack_type_;
+  };
+
+public:
+  // ctor
+  DiagnosticMessageHandler(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler,
+                           DoipTcpHandler &tcp_transport_handler, DoipChannelHandlerImpl &tcp_channel_handler_impl)
+      : tcp_socket_handler_{tcp_socket_handler},
+        tcp_channel_handler_impl_{tcp_channel_handler_impl},
+        tcp_transport_handler_{tcp_transport_handler} {
+
+  }
+
+  // dtor
+  ~DiagnosticMessageHandler() = default;
+
+  // Function to process Routing activation response
+  // auto ProcessDoIPDiagnosticAckMessageResponse(DoipMessage &doip_payload) noexcept -> void;
+
+  // Function to process Diagnostic message request
+  auto ProcessDoIPDiagnosticMessageRequest(DoipMessage &doip_payload) noexcept -> void;
+
+  // Function to send Diagnostic response
+  auto SendDiagnosticResponse(uds_transport::UdsMessageConstPtr &message) noexcept
+      -> uds_transport::UdsTransportProtocolMgr::TransmissionResult;
+
+  auto SendDiagnosticAckResponse(uds_transport::UdsMessageConstPtr &message) noexcept
+      -> uds_transport::UdsTransportProtocolMgr::TransmissionResult;
+private:
+  static auto CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, uint16_t payloadType,
+                                      uint32_t payloadLen) noexcept -> void;
+
+  // socket reference
+  ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
+  // transport handler reference
+  DoipChannelHandlerImpl &tcp_channel_handler_impl_;
+  // channel reference
+  // DoipChannel &channel_;
+  DoipTcpHandler &tcp_transport_handler_;
+};
+
+class DoipChannel;
+
+class DoipChannelHandlerImpl {
+public:
+  using TcpConnectionHandler = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpConnectionHandler;
+  using DoipChannelReadCallback = ::doip_handler::tcpSocket::DoipTcpSocketHandler::TcpHandlerRead;  
+
+public:
+  // ctor
+  DoipChannelHandlerImpl(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
+    DoipChannel &tcp_channle_, DoipTcpHandler &tcp_transport_handler);
+
+  // dtor
+  ~DoipChannelHandlerImpl();
+
+  // process message
+  auto HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> void;
+  
+  // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+  //   IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+  //                                 uds_transport::UdsMessage::Address target_addr,
+  //                                 uds_transport::UdsMessage::TargetAddressType type,
+  //                                 uds_transport::ChannelID channel_id, std::size_t size,
+  //                                 uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+  //                                 std::vector<uint8_t> payloadInfo);
+
+  // // Function to transmit the uds message
+  // uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
+  //   uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
+
+  // Function to create doip channel
+  // DoipChannel &CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection);
+  // Function to trigger Routing activation request
+  auto SendRoutingActivationResponse(uds_transport::UdsMessageConstPtr &message) noexcept
+      -> uds_transport::UdsTransportProtocolMgr::TransmissionResult;
+
+  // Function to send Diagnostic request
+  auto SendDiagnosticResponse(uds_transport::UdsMessageConstPtr &message) noexcept
+      -> uds_transport::UdsTransportProtocolMgr::TransmissionResult;
+private:
+  // reference to doip connection
+  // doip_server::connection::DoipTcpConnection &doip_connection_;
+  // Store the conversion
+  // const std::shared_ptr<ConversionHandler> &conversation_;
+    // Function to process DoIP Header
+  auto ProcessDoIPHeader(DoipMessage &doip_rx_message, uint8_t &nackCode) noexcept -> bool;
+
+  // Function to verify payload length of various payload type
+  auto ProcessDoIPPayloadLength(uint32_t payloadLen, uint16_t payloadType) noexcept -> bool;
+
+  // Function to get payload type
+  auto GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t;
+
+  // Function to get payload length
+  auto GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t;
+
+  // Function to process DoIP payload responses
+  auto ProcessDoIPPayload(DoipMessage &doip_payload) noexcept -> void;
+
+
+  // tcp socket handler
+  std::unique_ptr<::doip_handler::tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
+
+  // list of doip channel
+  // std::map<std::uint16_t, std::unique_ptr<DoipChannel>> doip_channel_list_;
+  DoipChannel& doip_channle_;
+
+  // handler to process routing activation req/ resp
+  RoutingActivationHandler routing_activation_handler_;
+  
+  // handler to process diagnostic message req/ resp
+  DiagnosticMessageHandler diagnostic_message_handler_;
+};
 
 // Class maintaining the doip channel
 class DoipChannel {
@@ -43,7 +205,8 @@ public:
 
 public:
     DoipChannel(connection::DoipTcpConnection &tcp_connection, std::uint16_t logical_address, 
-      ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler);
+      ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
+      DoipTcpHandler &tcp_transport_handler);
 
     ~DoipChannel();
 
@@ -148,7 +311,7 @@ public:
                                         std::uint32_t payload_len);
 
     // Function to trigger transmission routing activation response
-    void SendRoutingActivationResponse();
+    void SendRoutingActivationResponse(const DoipMessage &msg);
 
     // Function to trigger transmission diag ack response
     void SendDiagnosticMessageAckResponse();
@@ -157,8 +320,12 @@ public:
     void SendDiagnosticMessageResponse();
     
     // Function to send diagnostic pending response
-    void SendDiagnosticPendingMessageResponse();
+    void SendDiagnosticPendingMessageResponse();    
+
+    std::unique_ptr<DoipChannelHandlerImpl> doip_channel_handle_impl_;
+
 };
+
 
 class DoipTcpHandler {
 public:
@@ -171,6 +338,17 @@ public:
 
   // dtor
   ~DoipTcpHandler();
+
+  // process message
+  auto HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> void;
+  
+  std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+    IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+                                  uds_transport::UdsMessage::Address target_addr,
+                                  uds_transport::UdsMessage::TargetAddressType type,
+                                  uds_transport::ChannelID channel_id, std::size_t size,
+                                  uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+                                  std::vector<uint8_t> payloadInfo);
 
   // Function to transmit the uds message
   uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(

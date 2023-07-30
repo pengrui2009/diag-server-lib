@@ -26,6 +26,7 @@ DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::Conver
                                      std::string_view local_tcp_address, uint16_t tcp_port_num, std::uint16_t logical_address)
     : logical_address_(logical_address),
       uds_transport::Connection(1, conversion),
+      tcp_transport_handler_{tcp_transport_handler},
       tcp_channel_(tcp_transport_handler.CreateDoipChannel(logical_address_, *this)) {}
 
 // Initialize
@@ -83,8 +84,8 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
     // uds_transport::ChannelID channel_id = 0;
-    // return (tcp_transport_handler_->Transmit(std::move(message), 0));
-    return (tcp_channel_.Transmit(std::move(message)));
+    return (tcp_transport_handler_.Transmit(std::move(message), 0));
+    // return (tcp_channel_.Transmit(std::move(message)));
     // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 

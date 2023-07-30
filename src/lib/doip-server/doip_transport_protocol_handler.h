@@ -65,9 +65,9 @@ private:
   // Create Doip Connection Manager
   std::unique_ptr<connection::DoipConnectionManager> doip_connection_mgr_ptr;
 
-  std::unique_ptr<doip_handler::DoipTcpHandler> doip_tcp_handler_;
+  // std::unique_ptr<doip_handler::DoipTcpHandler> doip_tcp_handler_;
 
-  std::unique_ptr<doip_handler::DoipUdpHandler> doip_udp_handler_;
+  // std::unique_ptr<doip_handler::DoipUdpHandler> doip_udp_handler_;
 };
 
 }  // namespace transportProtocolHandler

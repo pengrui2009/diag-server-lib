@@ -19,6 +19,7 @@
 #include "utility/sync_timer.h"
 
 #include "src/dcm/service/service_base.h"
+#include "common/doip_payload_type.h"
 
 namespace diag {
 namespace server {
@@ -51,7 +52,10 @@ public:
   // shutdown
   void Shutdown() override;
 
-  void RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> &);
+  void Register(uint8_t sid, std::unique_ptr<ServiceBase> service) {
+    uds_services_[sid] = std::move(service);
+  }
+
   // Description   : Function to connect to Diagnostic Server
   // @param input  : Nothing
   // @return value : ConnectResult
@@ -60,7 +64,7 @@ public:
   // Description   : Function to disconnect from Diagnostic Server
   // @param input  : Nothing
   // @return value : DisconnectResult
-  DisconnectResult DisconnectFromDiagServer() override;
+  DisconnectResult DisconnectFromDiagServer() override;  
 
   // Description   : Function to send Diagnostic Request and receive response
   // @param input  : Nothing
@@ -111,6 +115,23 @@ private:
   // Function to cancel the synchronous wait
   void WaitCancel();
 
+  // Function to get payload type
+  static auto GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t;
+
+  // Function to get payload length
+  static auto GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t;
+
+  // Function to create the generic header
+  static void CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, std::uint16_t payload_type,
+                                      std::uint32_t payload_len);
+
+  void SendRoutingActivationResponse(const DoipMessage &);
+
+  void SendDiagnosticMessageAckResponse(const DoipMessage &);
+
+  void SendDiagnosticMessageResponse(const DoipMessage &);
+
+  void SendDiagnosticPendingMessageResponse(const DoipMessage &);
 private:
   // Conversion activity Status
   ActivityStatusType activity_status_;
@@ -120,10 +141,10 @@ private:
   SecurityLevelType active_security_;
   // Reception buffer
   uint32_t rx_buffer_size_;
-  // p2 client time
+  // p2 server time
   uint16_t p2_server_max_;
-  // p2 star Client time
-  uint16_t p2_star_client_max_;
+  // p2 star Server time
+  uint16_t p2_star_server_max_;
   // logical Source address
   uint16_t source_address_;
   // logical target address
@@ -132,6 +153,9 @@ private:
   std::string broadcast_address;
   // remote Ip Address
   std::string remote_address_;
+  // logical address
+  uint16_t logical_address_;
+
   // conversion name
   std::string conversation_name_;
   // queue to hold task

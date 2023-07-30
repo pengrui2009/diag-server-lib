@@ -91,6 +91,11 @@ void DCMServer::Shutdown() {
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Client Shutdown completed"; });
 }
 
+void DCMServer::RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> service) {
+  diag_server_conversation->Register(sid, std::move(service));
+}
+
+
 // Function to get the client Conversation
 diag::server::conversation::DiagServerConversation &DCMServer::StartDiagnosticServerConversation() {
   std::string diag_client_conversation_name{""};

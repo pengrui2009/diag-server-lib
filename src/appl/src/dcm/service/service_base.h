@@ -5,9 +5,9 @@
 
 enum DiagnosticSecurityLevel {
     SECURITY_LEVEL_0 = 0u, /* no need to unlocked */
-    SECURITY_LEVEL_1,
-    SECURITY_LEVEL_2,
-    SECURITY_LEVEL_3,
+    SECURITY_LEVEL_1 = 1u,
+    SECURITY_LEVEL_2 = 2u,
+    SECURITY_LEVEL_3 = 4u,
 };
 
 enum DiagnosticSessionType {
