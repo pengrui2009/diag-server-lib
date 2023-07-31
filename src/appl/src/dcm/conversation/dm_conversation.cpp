@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace diag {
 namespace server {
 namespace conversation {
 //ctor
-DmConversation::DmConversation(std::string_view conversion_name,
+DmConversation::DmConversation(uint16_t logical_address,
                                ::uds_transport::conversion_manager::ConversionIdentifierType &conversion_identifier)
     : diag::server::conversation::DiagServerConversation(),
       activity_status_{ActivityStatusType::kInactive},
@@ -29,8 +29,7 @@ DmConversation::DmConversation(std::string_view conversion_name,
       p2_star_server_max_{conversion_identifier.p2_star_server_max},
       source_address_{conversion_identifier.logical_address},
       target_address_{},
-      logical_address_{conversion_identifier.logical_address},
-      conversation_name_{conversion_name},
+      logical_address_{logical_address},
       exit_request_{false},
       running_{false},
       dm_conversion_handler_{std::make_shared<DmConversationHandler>(conversion_identifier.handler_id, *this)} {

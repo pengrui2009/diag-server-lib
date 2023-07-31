@@ -1,12 +1,12 @@
-/* Diagnostic Client library
- * Copyright (C) 2023  Avijit Dey
+/* Diagnostic Server library
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
-#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H
 
 #include <string_view>
 
@@ -169,6 +169,6 @@ private:
   std::unique_ptr<doip_handler::DoipTcpHandler> tcp_transport_handler_;     
 };
 }  // namespace connection
-}  // namespace doip_client
+}  // namespace doip_server
 
-#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
+#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H

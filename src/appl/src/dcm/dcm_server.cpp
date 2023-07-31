@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ constexpr std::string_view VehicleDiscoveryConversation{"VehicleDiscovery"};
 
 /*
  @ Class Name        : DCM
- @ Class Description : Class to create Diagnostic Manager Client functionality                           
+ @ Class Description : Class to create Diagnostic Manager Server functionality                           
  */
 DCMServer::DCMServer(diag::server::common::property_tree &ptree)
     : DiagnosticManager{},
@@ -68,7 +68,7 @@ void DCMServer::Initialize() {
   // start all the udsTransportProtocol Layer
   uds_transport_protocol_mgr->Startup();
   logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
-      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Client Initialized"; });
+      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Server Initialized"; });
 }
 
 // Run
@@ -76,7 +76,7 @@ void DCMServer::Run() {
   // run udsTransportProtocol layer
   uds_transport_protocol_mgr->Run();
   logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
-      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Client is ready to serve"; });
+      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Server is ready to serve"; });
 }
 
 // shutdown DCM
@@ -88,57 +88,64 @@ void DCMServer::Shutdown() {
   // shutdown udsTransportProtocol layer
   uds_transport_protocol_mgr->Shutdown();
   logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
-      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Client Shutdown completed"; });
+      __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "Dcm Server Shutdown completed"; });
 }
 
 void DCMServer::RegisterService(uint8_t sid, std::unique_ptr<ServiceBase> service) {
-  diag_server_conversation->Register(sid, std::move(service));
+  for (auto &iter : diag_server_conversations_) {
+    iter.second->Register(sid, std::move(service));
+  }
 }
 
 
-// Function to get the client Conversation
-diag::server::conversation::DiagServerConversation &DCMServer::StartDiagnosticServerConversation() {
-  std::string diag_client_conversation_name{""};
+// Function to get the server Conversation
+diag::server::conversation::DiagServerConversation &DCMServer::CreateDiagnosticServerConversation(uint16_t logical_address) {
+  std::string diag_server_conversation_name{""};
   ::uds_transport::conversion_manager::ConversionIdentifierType conversation_config;
 
-  conversation_config.p2_server_max = config.conversation_property.p2_server_max;
-  conversation_config.p2_star_server_max = config.conversation_property.p2_star_server_max;
-  conversation_config.p4_server_max = config.conversation_property.p4_server_max;
-  conversation_config.rx_buffer_size = config.conversation_property.rx_buffer_size;
-  conversation_config.logical_address = config.conversation_property.logical_address;
-  conversation_config.tcp_address = config.conversation_property.network.tcp_ip_address;
-  conversation_config.udp_address = config.udp_ip_address;
-  conversation_config.udp_broadcast_address = config.udp_broadcast_address;
-  conversation_config.port_num = 13400;
-  diag::server::conversation::DiagServerConversation *ret_conversation{nullptr};
-  // std::unique_ptr<diag::server::conversation::DiagServerConversation> conversation{
-  //     conversation_mgr->ListenDiagnosticServerConversation(diag_client_conversation_name)};
-  diag_server_conversation = std::make_unique<diag::server::conversation::DmConversation>("", conversation_config);
-  // std::unique_ptr<diag::server::conversation::DiagServerConversation> conversation{nullptr};
-  if (diag_server_conversation) {
-      diag_server_conversation->RegisterConnection(
-        uds_transport_protocol_mgr->doip_transport_handler->FindOrCreateTcpConnection(
-          diag_server_conversation->GetConversationHandler(), config.conversation_property.network.tcp_ip_address, 13400, 
-            config.conversation_property.logical_address));
-
-    diag_server_conversation->Startup();
-    // diag_server_vehicle_discovery_conversation.insert(
-    //     std::pair<std::string, std::unique_ptr<diag::server::conversation::DiagServerConversation>>{
-    //         conversation_name, std::move(conversation)});
-    // ret_conversation = diag_client_conversation_map.at(diag_client_conversation_name).get();
-    logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
-        __FILE__, __LINE__, __func__, [&](std::stringstream &msg) {
-          msg << "Diagnostic Client conversation created with name: " << diag_client_conversation_name;
-        });
+  if (diag_server_conversations_.count(logical_address)) {
+    return *diag_server_conversations_[logical_address];
   } else {
-    // no conversation found
-    logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogFatal(
-        __FILE__, __LINE__, __func__, [&](std::stringstream &msg) {
-          msg << "Diagnostic Client conversation not found with name: " << diag_client_conversation_name;
-        });
-    assert(diag_server_conversation);
+    conversation_config.p2_server_max = config.conversation_property.p2_server_max;
+    conversation_config.p2_star_server_max = config.conversation_property.p2_star_server_max;
+    conversation_config.p4_server_max = config.conversation_property.p4_server_max;
+    conversation_config.rx_buffer_size = config.conversation_property.rx_buffer_size;
+    conversation_config.logical_address = logical_address;
+    conversation_config.tcp_address = config.conversation_property.network.tcp_ip_address;
+    conversation_config.udp_address = config.udp_ip_address;
+    conversation_config.udp_broadcast_address = config.udp_broadcast_address;
+    conversation_config.port_num = 13400;
+    diag::server::conversation::DiagServerConversation *ret_conversation{nullptr};
+    // std::unique_ptr<diag::server::conversation::DiagServerConversation> conversation{
+    //     conversation_mgr->ListenDiagnosticServerConversation(diag_server_conversation_name)};
+    diag_server_conversations_[logical_address] = std::make_unique<diag::server::conversation::DmConversation>(logical_address, conversation_config);
+    // std::unique_ptr<diag::server::conversation::DiagServerConversation> conversation{nullptr};
+    if (diag_server_conversations_[logical_address]) {
+        diag_server_conversations_[logical_address]->RegisterConnection(
+          uds_transport_protocol_mgr->doip_transport_handler->FindOrCreateTcpConnection(
+            diag_server_conversations_[logical_address]->GetConversationHandler(), config.conversation_property.network.tcp_ip_address, 
+              13400, logical_address));
+
+      // diag_server_conversations_[logical_address]->Startup();
+      // diag_server_vehicle_discovery_conversation.insert(
+      //     std::pair<std::string, std::unique_ptr<diag::server::conversation::DiagServerConversation>>{
+      //         conversation_name, std::move(conversation)});
+      // ret_conversation = diag_server_conversation_map.at(diag_server_conversation_name).get();
+      logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, __func__, [&](std::stringstream &msg) {
+            msg << "Diagnostic Server conversation created with name: " << diag_server_conversation_name;
+          });
+    } else {
+      // no conversation found
+      logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogFatal(
+          __FILE__, __LINE__, __func__, [&](std::stringstream &msg) {
+            msg << "Diagnostic Server conversation not found with name: " << diag_server_conversation_name;
+          });
+      assert(diag_server_conversations_[logical_address]);
+    }
+    return *diag_server_conversations_[logical_address];
   }
-  return *diag_server_conversation;
+  
 }
 
 // Function to get read from json tree and return the config structure

@@ -1,5 +1,16 @@
-#ifndef DIAG_SERVER_LIB_SERVICE_BASE_H
-#define DIAG_SERVER_LIB_SERVICE_BASE_H
+/* Diagnostic Server Base
+ * Copyright (C) 2023  Rui Peng
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+/** @file service_base.h
+ *  @brief Entry function to service base
+ *  @author Avijit Dey
+ */
+#ifndef DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_BASE_H_
+#define DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_BASE_H_
 
 #include <stdint.h>
 
@@ -33,4 +44,4 @@ public:
 
 };
 
-#endif /* DIAG_SERVER_LIB_SERVICE_BASE_H */
+#endif /* DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_BASE_H_ */

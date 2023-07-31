@@ -1,12 +1,12 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#ifndef DIAG_SERVER_DOIP_UDP_HANDLER_H
-#define DIAG_SERVER_DOIP_UDP_HANDLER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_
 
 #include <string>
 #include <queue>
@@ -124,4 +124,4 @@ private:
 
 }  // namespace doip_handler
 }  // namespace doip_server
-#endif  //DIAG_SERVER_DOIP_UDP_HANDLER_H
+#endif  //DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_

@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ public:
   using SyncTimerState = SyncTimer::TimerState;
 
   // ctor
-  DmConversation(std::string_view conversion_name,
+  DmConversation(uint16_t logical_address,
                  ::uds_transport::conversion_manager::ConversionIdentifierType &conversion_identifier);
 
   // dtor
@@ -153,6 +153,7 @@ private:
   std::string broadcast_address;
   // remote Ip Address
   std::string remote_address_;
+
   // logical address
   uint16_t logical_address_;
 

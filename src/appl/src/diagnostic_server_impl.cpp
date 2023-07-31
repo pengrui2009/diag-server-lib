@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,14 +19,14 @@
 namespace diag {
 namespace server {
 // ctor
-DiagServerImpl::DiagServerImpl(std::string_view dm_client_config)
+DiagServerImpl::DiagServerImpl(std::string_view dm_server_config)
     : diag::server::DiagServer{},
       dcm_instance_ptr{},
       dcm_thread_{} {
   logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "DiagServer instance creation started"; });
   // start parsing the config json file
-  boost_support::parser::boostTree ptree{boost_support::parser::JsonParser{}.operator()(dm_client_config)};
+  boost_support::parser::boostTree ptree{boost_support::parser::JsonParser{}.operator()(dm_server_config)};
   // create single dcm instance and pass the config tree
   dcm_instance_ptr = std::make_unique<diag::server::dcm::DCMServer>(ptree);
   logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
@@ -55,8 +55,9 @@ void DiagServerImpl::DeInitialize() {
       __FILE__, __LINE__, __func__, [](std::stringstream &msg) { msg << "DiagServer De-Initialization completed"; });
 }
 
-diag::server::conversation::DiagServerConversation &DiagServerImpl::StartDiagnosticServerConversation() {
-  return (dcm_instance_ptr->StartDiagnosticServerConversation());
+diag::server::conversation::DiagServerConversation &DiagServerImpl::CreateDiagnosticServerConversation(
+  uint16_t logical_address) {
+  return (dcm_instance_ptr->CreateDiagnosticServerConversation(logical_address));
 }
 
 std::pair<diag::server::DiagServer::VehicleResponseResult,

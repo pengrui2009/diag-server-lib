@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,8 +53,8 @@ public:
   // Shutdown
   virtual void Shutdown() = 0;
 
-  // Function to get the diagnostic client conversation
-  virtual diag::server::conversation::DiagServerConversation &StartDiagnosticServerConversation() = 0;
+  // Function to get the diagnostic server conversation
+  virtual diag::server::conversation::DiagServerConversation &CreateDiagnosticServerConversation(uint16_t logical_address) = 0;
 
   // Send Vehicle Identification Request and get response
   virtual std::pair<diag::server::DiagServer::VehicleResponseResult,

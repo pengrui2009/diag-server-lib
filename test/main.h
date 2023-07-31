@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@
 #include "include/create_diagnostic_server.h"
 #include "include/diagnostic_server.h"
 
-namespace doip_client {
+namespace doip_server {
 
 // Diag Test Server Udp Ip Address
 const std::string DiagUdpIpAddress{"172.16.25.128"};
@@ -53,17 +53,17 @@ protected:
   void TearDown() override {}
 
   // Function to get Diag client library reference
-  auto GetDiagServerRef() noexcept -> diag::client::DiagServer& { return *diag_client_; }
+  auto GetDiagServerRef() noexcept -> diag::client::DiagServer& { return *diag_server_; }
 
   // Function to get Doip Test Handler reference
   auto GetDoipTestUdpHandlerRef() noexcept -> doip_handler::DoipUdpHandler& { return doip_udp_handler_; }
 
 private:
-  // diag client library
-  std::unique_ptr<diag::client::DiagServer> diag_client_;
+  // diag server library
+  std::unique_ptr<diag::server::DiagServer> diag_server_;
 
   // doip test handler
   doip_handler::DoipUdpHandler doip_udp_handler_;
 };
 
-}  // namespace doip_client
+}  // namespace doip_server

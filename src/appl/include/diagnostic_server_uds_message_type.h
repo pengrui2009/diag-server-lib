@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,8 @@ namespace server {
 namespace uds_message {
 
 /**
- * @brief    Class represents an UDS message exchanged between User of diag-client-lib and implementation of
- *           diag-client-lib on diagnostic request reception path or diagnostic response transmission path.
+ * @brief    Class represents an UDS message exchanged between User of diag-server-lib and implementation of
+ *           diag-server-lib on diagnostic request reception path or diagnostic response transmission path.
  *           UdsMessage provides the storage for UDS requests/responses.
  */
 class UdsMessage {

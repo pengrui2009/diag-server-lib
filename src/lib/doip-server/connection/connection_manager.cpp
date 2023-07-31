@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,8 +83,9 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 // Function to transmit the uds message
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
+    
     // uds_transport::ChannelID channel_id = 0;
-    return (tcp_transport_handler_.Transmit(std::move(message), 0));
+    return (tcp_channel_.Transmit(std::move(message)));
     // return (tcp_channel_.Transmit(std::move(message)));
     // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }

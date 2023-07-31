@@ -1,5 +1,5 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,12 +20,74 @@ namespace doip_handler {
 
 
 auto RoutingActivationHandler::ProcessDoIPRoutingActivationRequest(DoipMessage &doip_payload) noexcept -> void {
-
+  // if (channel_.GetChannelState().GetRoutingActivationStateContext().GetActiveState().GetState() ==
+  //     RoutingActivationChannelState::kWaitForRoutingActivationRes) {
+  //   // get the logical address of server
+  //   uint16_t client_address = (uint16_t) ((doip_payload.payload[BYTE_POS_ZERO] << 8) & 0xFF00) |
+  //                             (uint16_t) (doip_payload.payload[BYTE_POS_ONE] & 0x00FF);
+  //   // get the logical address of Server
+  //   uint16_t server_address = (uint16_t) ((doip_payload.payload[BYTE_POS_TWO] << 8) & 0xFF00) |
+  //                             (uint16_t) (doip_payload.payload[BYTE_POS_THREE] & 0x00FF);
+  //   // get the ack code
+  //   RoutingActivationAckType const rout_act_type{doip_payload.payload[BYTE_POS_FOUR]};
+  //   switch (rout_act_type.act_type_) {
+  //     case kDoip_RoutingActivation_ResCode_RoutingSuccessful: {
+  //       // routing successful
+  //       final_state = RoutingActivationChannelState::kRoutingActivationSuccessful;
+  //       logger::DoipClientLogger::GetDiagClientLogger().GetLogger().LogInfo(
+  //           __FILE__, __LINE__, __func__, [&server_address](std::stringstream &msg) {
+  //             msg << "RoutingActivation successfully activated in remote server with logical Address"
+  //                 << " (0x" << std::hex << server_address << ")";
+  //           });
+  //     } break;
+  //     case kDoip_RoutingActivation_ResCode_ConfirmtnRequired: {
+  //       // trigger routing activation after sometime, not implemented yet
+  //       logger::DoipClientLogger::GetDiagClientLogger().GetLogger().LogInfo(
+  //           __FILE__, __LINE__, __func__, [&server_address](std::stringstream &msg) {
+  //             msg << "RoutingActivation is activated, confirmation required in remote server with logical Address"
+  //                 << " (0x" << std::hex << server_address << ")";
+  //           });
+  //     } break;
+  //     default:
+  //       // failure, do nothing
+  //       logger::DoipClientLogger::GetDiagClientLogger().GetLogger().LogWarn(
+  //           __FILE__, __LINE__, __func__,
+  //           [&rout_act_type](std::stringstream &msg) { msg << "Routing activation denied due to " << rout_act_type; });
+  //       break;
+  //   }
+  //   channel_.GetChannelState().GetRoutingActivationStateContext().TransitionTo(final_state);
+  //   channel_.WaitCancel();
+  // } else {
+  //   /* ignore */
+  // }
 }
 
 auto RoutingActivationHandler::SendRoutingActivationResponse(uds_transport::UdsMessageConstPtr &message) noexcept
       -> uds_transport::UdsTransportProtocolMgr::TransmissionResult {
-  return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+
+  uds_transport::UdsTransportProtocolMgr::TransmissionResult ret_val{
+      uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitFailed};
+
+  TcpMessagePtr doip_routing_act_req{std::make_unique<TcpMessage>()};
+  // reserve bytes in vector
+  doip_routing_act_req->txBuffer_.reserve(kDoipheadrSize + kDoip_RoutingActivation_ReqMinLen);
+  // create header
+  CreateDoipGenericHeader(doip_routing_act_req->txBuffer_, kDoip_RoutingActivation_ReqType,
+                          kDoip_RoutingActivation_ReqMinLen);
+  // Add source address
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) ((message->GetSa() & 0xFF00) >> 8));
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) (message->GetSa() & 0x00FF));
+  // Add activation type
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) kDoip_RoutingActivation_ReqActType_Default);
+  // Add reservation byte , default zeroes
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) 0x00);
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) 0x00);
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) 0x00);
+  doip_routing_act_req->txBuffer_.emplace_back((uint8_t) 0x00);
+  // transmit
+  return tcp_channel_.Transmit(std::move(doip_routing_act_req));
+    
+  // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
 void RoutingActivationHandler::CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, uint16_t payloadType, 
@@ -49,7 +111,7 @@ auto DiagnosticMessageHandler::ProcessDoIPDiagnosticMessageRequest(DoipMessage &
     noexcept -> void {
     
     std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
-            tcp_transport_handler_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+            tcp_channel_.IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
                             static_cast<uds_transport::UdsMessage::Address>(0),
                             uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
                             static_cast<std::size_t>(doip_payload.payload.size() - 4U), 0U,
@@ -58,7 +120,11 @@ auto DiagnosticMessageHandler::ProcessDoIPDiagnosticMessageRequest(DoipMessage &
 
 auto DiagnosticMessageHandler::SendDiagnosticResponse(uds_transport::UdsMessageConstPtr &message) 
     noexcept -> uds_transport::UdsTransportProtocolMgr::TransmissionResult {
-    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+    
+    TcpMessagePtr doip_routing_act_req{std::make_unique<TcpMessage>()};
+
+    return tcp_channel_.Transmit(std::move(doip_routing_act_req));
+    
 }
 
 auto DiagnosticMessageHandler::SendDiagnosticAckResponse(uds_transport::UdsMessageConstPtr &message) noexcept
@@ -73,11 +139,10 @@ auto DiagnosticMessageHandler::CreateDoipGenericHeader(std::vector<uint8_t> &doi
 }
 
 
-DoipChannelHandlerImpl::DoipChannelHandlerImpl(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
-  DoipChannel &tcp_channle, DoipTcpHandler &tcp_transport_handler) :
-    doip_channle_{tcp_channle},
-    routing_activation_handler_(tcp_socket_handler, *this),
-    diagnostic_message_handler_(tcp_socket_handler, tcp_transport_handler, *this) {
+DoipChannelHandlerImpl::DoipChannelHandlerImpl(DoipChannel &tcp_channel, DoipTcpHandler &tcp_transport_handler) :
+    doip_channle_{tcp_channel},
+    routing_activation_handler_(tcp_channel, *this),
+    diagnostic_message_handler_(tcp_channel, *this) {
 
 }
 
@@ -86,7 +151,52 @@ DoipChannelHandlerImpl::~DoipChannelHandlerImpl() {
 }
 
 auto DoipChannelHandlerImpl::HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> void {
-
+  DoipMessage received_doip_message;
+  received_doip_message.host_ip_address = tcp_rx_message->host_ip_address_;
+  received_doip_message.port_num = tcp_rx_message->host_port_num_;
+  received_doip_message.protocol_version = tcp_rx_message->rxBuffer_[0];
+  received_doip_message.protocol_version_inv = tcp_rx_message->rxBuffer_[1];
+  received_doip_message.payload_type = GetDoIPPayloadType(tcp_rx_message->rxBuffer_);
+  received_doip_message.payload_length = GetDoIPPayloadLength(tcp_rx_message->rxBuffer_);
+  if (received_doip_message.payload_length > 0U) {
+    received_doip_message.payload.insert(received_doip_message.payload.begin(),
+                                          tcp_rx_message->rxBuffer_.begin() + kDoipheadrSize,
+                                          tcp_rx_message->rxBuffer_.end());
+  }
+  
+  if (received_doip_message.payload_type == kDoip_RoutingActivation_ReqType) {    
+    routing_activation_handler_.ProcessDoIPRoutingActivationRequest(received_doip_message);
+  } else if (received_doip_message.payload_type == kDoip_DiagMessage_Type) {
+    diagnostic_message_handler_.ProcessDoIPDiagnosticMessageRequest(received_doip_message);
+    // this->SendDiagnosticMessageAckResponse();        
+    // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
+    //     IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+    //                     static_cast<uds_transport::UdsMessage::Address>(0),
+    //                     uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
+    //                     static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
+    //                     "DoIPTcp", received_doip_message_.payload)};
+  }
+  // doip_channel_handle_impl_->HandleMessage(std::move(tcp_rx_message));
+  // Trigger async transmission
+  // {
+  //   std::lock_guard<std::mutex> const lck{mutex_};
+    // job_queue_.emplace([this]() {
+      // if (received_doip_message.payload_type == kDoip_RoutingActivation_ReqType) {        
+      //   routing_activation_handler_.ProcessDoIPRoutingActivationRequest(received_doip_message);
+      // } else if (received_doip_message_.payload_type == kDoip_DiagMessage_Type) {
+      //   diagnostic_message_handler_.ProcessDoIPDiagnosticMessageRequest(received_doip_message);
+        // this->SendDiagnosticMessageAckResponse();        
+        // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
+        //     IndicateMessage(static_cast<uds_transport::UdsMessage::Address>(0),
+        //                     static_cast<uds_transport::UdsMessage::Address>(0),
+        //                     uds_transport::UdsMessage::TargetAddressType::kPhysical, 0U,
+        //                     static_cast<std::size_t>(received_doip_message_.payload.size() - 4U), 0U,
+        //                     "DoIPTcp", received_doip_message_.payload)};
+      // }
+    // });
+    // running_ = true;
+  // }
+  // cond_var_.notify_all();
 }
 
 auto DoipChannelHandlerImpl::SendRoutingActivationResponse(uds_transport::UdsMessageConstPtr &message) noexcept
@@ -130,12 +240,6 @@ auto DoipChannelHandlerImpl::ProcessDoIPPayload(DoipMessage &doip_payload)
 
 }
 
-DoipChannel &DoipTcpHandler::CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection) {
-  // create new doip channel
-  doip_channel_list_.emplace(logical_address,
-                             std::make_unique<DoipChannel>(tcp_connection, logical_address, *tcp_socket_handler_, *this));
-  return *doip_channel_list_[logical_address];
-}
 
 DoipChannel::DoipChannel(connection::DoipTcpConnection &tcp_connection, std::uint16_t logical_address, 
                          ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler,
@@ -144,7 +248,7 @@ DoipChannel::DoipChannel(connection::DoipTcpConnection &tcp_connection, std::uin
       tcp_socket_handler_{tcp_socket_handler},
       tcp_connection_{tcp_connection},
       tcp_connection_handler_{},
-      doip_channel_handle_impl_{std::make_unique<DoipChannelHandlerImpl>(tcp_socket_handler_, *this, tcp_transport_handler)},
+      doip_channel_handle_impl_{std::make_unique<DoipChannelHandlerImpl>(*this, tcp_transport_handler)},
       exit_request_{false},
       running_{false},
       routing_activation_res_code_{kDoip_RoutingActivation_ResCode_RoutingSuccessful},
@@ -207,10 +311,24 @@ void DoipChannel::StartAcceptingConnection() {
 
 // Function to transmit the uds message
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipChannel::Transmit(
-  uds_transport::UdsMessageConstPtr message) {
+  TcpMessagePtr message) {
   // TODO
-  return tcp_connection_.Transmit(std::move(message));
-  // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+
+  if (tcp_connection_handler_->Transmit(std::move(message))) {
+    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+  } else {
+    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitFailed;
+  }  
+}
+
+uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipChannel::Transmit(
+      uds_transport::UdsMessageConstPtr message) {
+  TcpMessagePtr tcp_tx_message{std::make_unique<TcpMessage>()};
+  if (tcp_connection_handler_->Transmit(std::move(tcp_tx_message))) {
+    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+  } else {
+    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitFailed;
+  }  
 }
 
 std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
@@ -503,21 +621,28 @@ auto DoipTcpHandler::HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> voi
   // cond_var_.notify_all();
 }
 
-std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
-  DoipTcpHandler::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
-                                uds_transport::UdsMessage::Address target_addr,
-                                uds_transport::UdsMessage::TargetAddressType type,
-                                uds_transport::ChannelID channel_id, std::size_t size,
-                                uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
-                                std::vector<uint8_t> payloadInfo) {
-  doip_channel_list_[source_addr]->IndicateMessage(source_addr, target_addr, type, channel_id, 
-      size, priority, protocol_kind, payloadInfo);
-    return {uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
-}
+// std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+//   DoipTcpHandler::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+//                                 uds_transport::UdsMessage::Address target_addr,
+//                                 uds_transport::UdsMessage::TargetAddressType type,
+//                                 uds_transport::ChannelID channel_id, std::size_t size,
+//                                 uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+//                                 std::vector<uint8_t> payloadInfo) {
+//   doip_channel_list_[source_addr]->IndicateMessage(source_addr, target_addr, type, channel_id, 
+//       size, priority, protocol_kind, payloadInfo);
+//     return {uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
+// }
 
-uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Transmit(
-    uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address) {
-    return (doip_channel_list_[logical_address]->Transmit(std::move(message)));  
+// uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpHandler::Transmit(
+//     uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address) {
+//     return (doip_channel_list_[logical_address]->Transmit(std::move(message)));  
+// }
+
+DoipChannel &DoipTcpHandler::CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection) {
+  // create new doip channel
+  doip_channel_list_.emplace(logical_address,
+                             std::make_unique<DoipChannel>(tcp_connection, logical_address, *tcp_socket_handler_, *this));
+  return *doip_channel_list_[logical_address];
 }
 
 

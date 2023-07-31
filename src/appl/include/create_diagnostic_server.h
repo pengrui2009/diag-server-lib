@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,16 +22,16 @@ namespace server {
 class DiagServer;
 
 /**
- * @brief       Function to get the instance of Diagnostic Client Object.
+ * @brief       Function to get the instance of Diagnostic Server Object.
  *              This instance to be further used for all the functionalities.
- * @param[in]   diag_client_config_path
- *              path to diag client config file
+ * @param[in]   diag_server_config_path
+ *              path to diag server config file
  * @return      std::unique_ptr<diag::server::DiagServer>
- *              Unique pointer to diag client object
+ *              Unique pointer to diag server object
  * @remarks     Implemented requirements:
  *              DiagServerLib-Library-Support, DiagServerLib-ComParam-Settings
  */
-std::unique_ptr<diag::server::DiagServer> CreateDiagnosticServer(std::string_view diag_client_config_path);
+std::unique_ptr<diag::server::DiagServer> CreateDiagnosticServer(std::string_view diag_server_config_path);
 
 }  // namespace server
 }  // namespace diag

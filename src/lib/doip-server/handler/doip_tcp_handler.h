@@ -1,13 +1,13 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#ifndef DIAG_SERVER_DOIP_TCP_HANDLER_H
-#define DIAG_SERVER_DOIP_TCP_HANDLER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_TCP_HANDLER_H_
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_TCP_HANDLER_H_
 
 #include <functional>
 #include <map>
@@ -33,7 +33,7 @@ using TcpMessage = ::doip_handler::tcpSocket::TcpMessage;
 using TcpMessagePtr = ::doip_handler::tcpSocket::TcpMessagePtr;
 using TcpMessageConstPtr = ::doip_handler::tcpSocket::TcpMessageConstPtr;
 
-
+class DoipChannel;
 class DoipTcpHandler;
 class DoipChannelHandlerImpl;
 /*
@@ -49,9 +49,8 @@ public:
 
 public:
   // ctor
-  RoutingActivationHandler(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
-      DoipChannelHandlerImpl &tcp_channel_handler_impl)
-      : tcp_socket_handler_{tcp_socket_handler},
+  RoutingActivationHandler(DoipChannel &tcp_channel, DoipChannelHandlerImpl &tcp_channel_handler_impl)
+      : tcp_channel_{tcp_channel},
         tcp_channel_handler_impl_{tcp_channel_handler_impl} {}
 
   // dtor
@@ -69,9 +68,11 @@ private:
 
 private:
   // socket reference
-  ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
+  // ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
   // channel reference
   DoipChannelHandlerImpl &tcp_channel_handler_impl_;
+  // 
+  DoipChannel &tcp_channel_;
 };
 
 /*
@@ -87,13 +88,9 @@ public:
 
 public:
   // ctor
-  DiagnosticMessageHandler(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler,
-                           DoipTcpHandler &tcp_transport_handler, DoipChannelHandlerImpl &tcp_channel_handler_impl)
-      : tcp_socket_handler_{tcp_socket_handler},
-        tcp_channel_handler_impl_{tcp_channel_handler_impl},
-        tcp_transport_handler_{tcp_transport_handler} {
-
-  }
+  DiagnosticMessageHandler(DoipChannel &tcp_channel, DoipChannelHandlerImpl &tcp_channel_handler_impl)
+      : tcp_channel_{tcp_channel},
+        tcp_channel_handler_impl_{tcp_channel_handler_impl} {}
 
   // dtor
   ~DiagnosticMessageHandler() = default;
@@ -115,12 +112,12 @@ private:
                                       uint32_t payloadLen) noexcept -> void;
 
   // socket reference
-  ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
+  // ::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler_;
   // transport handler reference
   DoipChannelHandlerImpl &tcp_channel_handler_impl_;
   // channel reference
-  // DoipChannel &channel_;
-  DoipTcpHandler &tcp_transport_handler_;
+  DoipChannel &tcp_channel_;
+  // DoipTcpHandler &tcp_transport_handler_;
 };
 
 class DoipChannel;
@@ -132,8 +129,7 @@ public:
 
 public:
   // ctor
-  DoipChannelHandlerImpl(::doip_handler::tcpSocket::DoipTcpSocketHandler &tcp_socket_handler, 
-    DoipChannel &tcp_channle_, DoipTcpHandler &tcp_transport_handler);
+  DoipChannelHandlerImpl(DoipChannel &tcp_channle_, DoipTcpHandler &tcp_transport_handler);
 
   // dtor
   ~DoipChannelHandlerImpl();
@@ -184,7 +180,7 @@ private:
 
 
   // tcp socket handler
-  std::unique_ptr<::doip_handler::tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
+  // std::unique_ptr<::doip_handler::tcpSocket::DoipTcpSocketHandler> tcp_socket_handler_;
 
   // list of doip channel
   // std::map<std::uint16_t, std::unique_ptr<DoipChannel>> doip_channel_list_;
@@ -218,8 +214,11 @@ public:
 
     // Function to transmit the uds message
     uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
-      uds_transport::UdsMessageConstPtr message);
+      TcpMessagePtr message);
 
+    uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
+      uds_transport::UdsMessageConstPtr message);
+    
     std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
       IndicateMessage(uds_transport::UdsMessage::Address source_addr,
                                    uds_transport::UdsMessage::Address target_addr,
@@ -342,17 +341,17 @@ public:
   // process message
   auto HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> void;
   
-  std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
-    IndicateMessage(uds_transport::UdsMessage::Address source_addr,
-                                  uds_transport::UdsMessage::Address target_addr,
-                                  uds_transport::UdsMessage::TargetAddressType type,
-                                  uds_transport::ChannelID channel_id, std::size_t size,
-                                  uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
-                                  std::vector<uint8_t> payloadInfo);
+  // std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
+  //   IndicateMessage(uds_transport::UdsMessage::Address source_addr,
+  //                                 uds_transport::UdsMessage::Address target_addr,
+  //                                 uds_transport::UdsMessage::TargetAddressType type,
+  //                                 uds_transport::ChannelID channel_id, std::size_t size,
+  //                                 uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
+  //                                 std::vector<uint8_t> payloadInfo);
 
   // Function to transmit the uds message
-  uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
-    uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
+  // uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
+  //   uds_transport::UdsMessageConstPtr message, std::uint16_t logical_address);
 
   // Function to create doip channel
   DoipChannel &CreateDoipChannel(std::uint16_t logical_address, connection::DoipTcpConnection &tcp_connection);
@@ -373,4 +372,4 @@ private:
 }  // namespace doip_handler
 }  // namespace doip_server
 
-#endif  //DIAG_SERVER_DOIP_TCP_HANDLER_H
+#endif  //DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_TCP_HANDLER_H_

@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@ namespace diag {
 namespace server {
 
 /**
- * @brief    Class to manage Diagnostic Client
+ * @brief    Class to manage Diagnostic Server
  */
 class DiagServer {
 public:
@@ -84,11 +84,11 @@ public:
    * @param[in]   conversation_name
    *              Name of conversation configured as json parameter "ConversationName"
    * @return      DiagServerConversation&
-   *              Reference to diag client conversation
+   *              Reference to diag server conversation
    * @remarks     Implemented requirements:
    *              DiagServerLib-MultipleTester-Connection, DiagServerLib-Conversation-Construction
    */
-  virtual diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation() = 0;
+  virtual diag::server::conversation::DiagServerConversation& CreateDiagnosticServerConversation(uint16_t logical_address) = 0;
 };
 
 }  // namespace server

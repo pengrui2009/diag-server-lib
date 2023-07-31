@@ -1,3 +1,17 @@
+/* Diagnostic Server 0x10
+ * Copyright (C) 2023  Rui Peng
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+/** @file service_0x10.h
+ *  @brief Entry function to service 0x10
+ *  @author Avijit Dey
+ */
+#ifndef DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_0X10_H_
+#define DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_0X10_H_
+
 #include "service_base.h"
 
 namespace diag {
@@ -31,3 +45,6 @@ private:
 } // namespace service
 } // namespace server
 } // namespace diag
+
+
+#endif /* DIAG_SERVER_LIB_APPL_SRC_DCM_SERVICE_SERVICE_0X10_H_ */

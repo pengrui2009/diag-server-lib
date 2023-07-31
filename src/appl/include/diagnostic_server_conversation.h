@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,7 +81,7 @@ public:
   virtual ~DiagServerConversation() = default;
 
   /**
-   * @brief      Function to startup the Diagnostic Client Conversation
+   * @brief      Function to startup the Diagnostic Server Conversation
    * @details    Must be called once and before using any other functions of DiagServerConversation
    * @remarks    Implemented requirements:
    *             DiagServerLib-Conversation-StartUp
@@ -89,7 +89,7 @@ public:
   virtual void Startup() = 0;
 
   /**
-   * @brief      Function to shutdown the Diagnostic Client Conversation
+   * @brief      Function to shutdown the Diagnostic Server Conversation
    * @details    Must be called during shutdown phase, no further processing of any
    *             function will be allowed after this call
    * @remarks    Implemented requirements:

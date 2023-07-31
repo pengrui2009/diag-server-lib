@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ struct ConversationType {
   DoipNetworkType network;
 };
 
-// Properties of diag client configuration
+// Properties of diag server configuration
 struct DCMServerConfig {
   // local udp address
   std::string udp_ip_address;
