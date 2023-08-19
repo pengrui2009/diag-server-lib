@@ -90,7 +90,7 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Tr
 // Hands over a valid message to conversion
 void DoipTcpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
     // send full message to conversion
-    conversation_->HandleMessage(std::move(message));
+    // conversation_->HandleMessage(std::move(message));
 }
 
 /*
