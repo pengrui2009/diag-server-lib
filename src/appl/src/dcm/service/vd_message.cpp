@@ -1,5 +1,5 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,12 +24,12 @@ auto SerializeVehicleInfoList(std::uint8_t preselection_mode, uds_transport::Byt
 }
 
 VdMessage::VdMessage(std::uint8_t preselection_mode, uds_transport::ByteVector& preselection_value,
-                     std::string_view host_ip_address)
+                     std::string_view remote_ip_address)
     : uds_transport::UdsMessage(),
       source_address_{0U},
       target_address_{0U},
       target_address_type{TargetAddressType::kPhysical},
-      host_ip_address_{host_ip_address},
+      remote_ip_address_{remote_ip_address},
       vehicle_info_payload_{SerializeVehicleInfoList(preselection_mode, preselection_value)} {}
 
 VdMessage::VdMessage() noexcept

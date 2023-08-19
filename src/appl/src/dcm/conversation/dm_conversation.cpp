@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,30 +11,58 @@
 
 #include "src/common/logger.h"
 #include "src/dcm/service/dm_uds_message.h"
+#include "common/common_doip_types.h"
+#include "src/dcm/service/service_0x10.h"
 
 namespace diag {
 namespace server {
 namespace conversation {
 //ctor
-DmConversation::DmConversation(std::string_view conversion_name,
+DmConversation::DmConversation(uint16_t logical_address,
                                ::uds_transport::conversion_manager::ConversionIdentifierType &conversion_identifier)
     : diag::server::conversation::DiagServerConversation(),
       activity_status_{ActivityStatusType::kInactive},
       active_session_{SessionControlType::kDefaultSession},
       active_security_{SecurityLevelType::kLocked},
       rx_buffer_size_{conversion_identifier.rx_buffer_size},
-      p2_client_max_{conversion_identifier.p2_client_max},
-      p2_star_client_max_{conversion_identifier.p2_star_client_max},
-      source_address_{conversion_identifier.source_address},
+      p2_server_max_{conversion_identifier.p2_server_max},
+      p2_star_server_max_{conversion_identifier.p2_star_server_max},
+      source_address_{conversion_identifier.logical_address},
       target_address_{},
-      conversation_name_{conversion_name},
-      dm_conversion_handler_{std::make_shared<DmConversationHandler>(conversion_identifier.handler_id, *this)} {}
+      logical_address_{logical_address},
+      exit_request_{false},
+      running_{false},
+      dm_conversion_handler_{std::make_shared<DmConversationHandler>(conversion_identifier.handler_id, *this)} {
+  
+  uds_services_[0x10] = std::make_unique<service::Service0x10>(*this);
+
+  // Start thread to receive messages
+  thread_ = std::thread([this]() {
+    std::unique_lock<std::mutex> lck(mutex_);
+    while (!exit_request_) {
+      if (!running_) {
+        cond_var_.wait(lck, [this]() { return exit_request_ || running_; });
+      }
+      if (!exit_request_.load()) {
+        if (running_) {
+          while (!job_queue_.empty()) {
+            std::function<void(void)> const job{job_queue_.front()};
+            job();
+            job_queue_.pop();
+          }
+        }
+      }
+    }
+  });
+}
 
 //dtor
 DmConversation::~DmConversation() = default;
 
+
 // startup
 void DmConversation::Startup() {
+
   // initialize the connection
   connection_ptr_->Initialize();
   // start the connection
@@ -151,7 +179,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
                 __FILE__, __LINE__, "", [&](std::stringstream &msg) {
                   msg << "'" << conversation_name_ << "'"
                       << "-> "
-                      << "Diagnostic Response P2 Timeout happened after " << p2_client_max_ << " milliseconds";
+                      << "Diagnostic Response P2 Timeout happened after " << p2_server_max_ << " milliseconds";
                 });
           },
           [&]() {
@@ -165,7 +193,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
               conversation_state_.GetConversationStateContext().TransitionTo(ConversationState::kDiagStartP2StarTimer);
             }
           },
-          p2_client_max_);
+          p2_server_max_);
 
       // Wait until final response or timeout
       while (conversation_state_.GetConversationStateContext().GetActiveState().GetState() !=
@@ -186,7 +214,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
                       __FILE__, __LINE__, "", [&](std::stringstream &msg) {
                         msg << "'" << conversation_name_ << "'"
                             << "-> "
-                            << "Diagnostic Response P2 Star Timeout happened after " << p2_star_client_max_
+                            << "Diagnostic Response P2 Star Timeout happened after " << p2_star_server_max_
                             << " milliseconds";
                         ;
                       });
@@ -205,7 +233,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
                         ConversationState::kDiagStartP2StarTimer);
                   }
                 },
-                p2_star_client_max_);
+                p2_star_server_max_);
             break;
           case ConversationState::kDiagSuccess:
             // change state to idle, form the uds response and return
@@ -239,6 +267,188 @@ void DmConversation::RegisterConnection(std::shared_ptr<uds_transport::Connectio
   connection_ptr_ = std::move(connection);
 }
 
+std::shared_ptr<::uds_transport::ConversionHandler> &DmConversation::GetConversationHandler() {
+  return dm_conversion_handler_;
+}
+
+
+auto DmConversation::GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t {
+  return ((uint16_t) (((payload[BYTE_POS_TWO] & 0xFF) << 8) | (payload[BYTE_POS_THREE] & 0xFF)));
+}
+
+auto DmConversation::GetDoIPPayloadLength(std::vector<uint8_t> payload) noexcept -> uint32_t {
+  return ((uint32_t) ((payload[BYTE_POS_FOUR] << 24U) & 0xFF000000) |
+          (uint32_t) ((payload[BYTE_POS_FIVE] << 16U) & 0x00FF0000) |
+          (uint32_t) ((payload[BYTE_POS_SIX] << 8U) & 0x0000FF00) |
+          (uint32_t) ((payload[BYTE_POS_SEVEN] & 0x000000FF)));
+}
+
+void DmConversation::CreateDoipGenericHeader(std::vector<uint8_t> &doipHeader, std::uint16_t payload_type,
+                                                          std::uint32_t payload_len) {
+  doipHeader.push_back(kDoip_ProtocolVersion);
+  doipHeader.push_back(~((uint8_t) kDoip_ProtocolVersion));
+  doipHeader.push_back((uint8_t) ((payload_type & 0xFF00) >> 8));
+  doipHeader.push_back((uint8_t) (payload_type & 0x00FF));
+  doipHeader.push_back((uint8_t) ((payload_len & 0xFF000000) >> 24));
+  doipHeader.push_back((uint8_t) ((payload_len & 0x00FF0000) >> 16));
+  doipHeader.push_back((uint8_t) ((payload_len & 0x0000FF00) >> 8));
+  doipHeader.push_back((uint8_t) (payload_len & 0x000000FF));
+}
+
+
+void DmConversation::SendRoutingActivationResponse(const DoipMessage &doip_message) {
+  std::vector<uint8_t> payload;
+  uds_transport::UdsMessagePtr message = std::make_unique<diag::server::uds_message::DmUdsMessage>();
+  // TcpMessagePtr routing_activation_response{std::make_unique<TcpMessage>()};
+  // create header
+  // routing_activation_response->txBuffer_.reserve(kDoipheadrSize + kDoip_RoutingActivation_ResMinLen);
+  // CreateDoipGenericHeader(routing_activation_response->txBuffer_, kDoip_RoutingActivation_ResType,
+  //                         kDoip_RoutingActivation_ResMinLen);
+
+  // logical address of client
+  payload.emplace_back(doip_message.payload[0]);
+  payload.emplace_back(doip_message.payload[1]);
+  // logical address of server
+  payload.emplace_back(logical_address_ >> 8U);
+  payload.emplace_back(logical_address_ & 0xFFU);
+  // activation response code
+  payload.emplace_back(kDoip_RoutingActivation_ResCode_ConfirmtnRequired);
+  payload.emplace_back(0x00);
+  payload.emplace_back(0x00);
+  payload.emplace_back(0x00);
+  payload.emplace_back(0x00);
+  
+  message->SetPayload(payload);
+  
+  uds_transport::UdsTransportProtocolMgr::TransmissionResult ret;
+  ret = connection_ptr_->Transmit(std::move(message));
+  if (uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk == ret) {
+
+  }
+  // if (connection_ptr_->Transmit(std::move(routing_activation_response))) { 
+  //   running_ = false; 
+  // }
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+        __FILE__, __LINE__, "", [&](std::stringstream &msg) {
+          msg << "DmConversation::SendRoutingActivationResponse";          
+        });
+}
+
+void DmConversation::SendDiagnosticMessageAckResponse(const DoipMessage &doip_message) {
+  // TcpMessagePtr diag_msg_ack_response{std::make_unique<TcpMessage>()};
+  // // create header
+  // diag_msg_ack_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessageAck_ResMinLen);
+  // if (diag_msg_ack_code_ == kDoip_DiagnosticMessage_PosAckCode_Confirm) {
+  //   CreateDoipGenericHeader(diag_msg_ack_response->txBuffer_, kDoip_DiagMessagePosAck_Type,
+  //                           kDoip_DiagMessageAck_ResMinLen);
+  // } else {
+  //   CreateDoipGenericHeader(diag_msg_ack_response->txBuffer_, kDoip_DiagMessageNegAck_Type,
+  //                           kDoip_DiagMessageAck_ResMinLen);
+  // }
+  // // logical address of client
+  // diag_msg_ack_response->txBuffer_.emplace_back(logical_address_ >> 8U);
+  // diag_msg_ack_response->txBuffer_.emplace_back(logical_address_ & 0xFFU);
+
+  // // logical address of target
+  // diag_msg_ack_response->txBuffer_.emplace_back(received_doip_message_.payload[0]);
+  // diag_msg_ack_response->txBuffer_.emplace_back(received_doip_message_.payload[1]);
+
+  // // activation response code
+  // diag_msg_ack_response->txBuffer_.emplace_back(diag_msg_ack_code_);
+
+  // if (tcp_connection_->Transmit(std::move(diag_msg_ack_response))) {
+  //   // Check for diag message ack code
+  //   if (diag_msg_ack_code_ == kDoip_DiagnosticMessage_PosAckCode_Confirm) {
+  //     logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(
+  //         __FILE__, __LINE__, "",
+  //         [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Pos Ack Response success"; });
+
+  //     // Check for pending responses set
+  //     if(!uds_pending_response_payload_.empty()) {
+  //       // emplace pending response jobs based on number of pending response
+  //       for(std::uint8_t pending_count{0}; pending_count < num_of_pending_response_; pending_count++) {
+  //         job_queue_.emplace([this]() {
+  //           // wait so that diag positive ack is processed first before sending diag response
+  //           std::this_thread::sleep_for(std::chrono::milliseconds(25));
+  //           this->SendDiagnosticPendingMessageResponse();
+  //         });        
+  //       }
+  //     }
+  //     // emplace a positive response
+  //     job_queue_.emplace([this]() {
+  //       // wait so that diag positive ack is processed first before sending diag response
+  //       std::this_thread::sleep_for(std::chrono::milliseconds(25));
+  //       this->SendDiagnosticMessageResponse();
+  //     });
+  //     running_ = true;
+  //     cond_var_.notify_all();
+  //   } else {
+  //     logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(
+  //         __FILE__, __LINE__, "",
+  //         [](std::stringstream &msg) { msg << "Sending of Diagnostic Message Neg Ack Response success"; });
+  //   }
+  // }
+}
+
+void DmConversation::SendDiagnosticMessageResponse(const DoipMessage &doip_message) {
+  // TcpMessagePtr diag_uds_message_response{std::make_unique<TcpMessage>()};
+  // // create header
+  // diag_uds_message_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen +
+  //                                              uds_response_payload_.size());
+  // CreateDoipGenericHeader(diag_uds_message_response->txBuffer_, kDoip_DiagMessage_Type,
+  //                         kDoip_DiagMessage_ReqResMinLen + uds_response_payload_.size());
+
+  // // logical address of client
+  // diag_uds_message_response->txBuffer_.emplace_back(logical_address_ >> 8U);
+  // diag_uds_message_response->txBuffer_.emplace_back(logical_address_ & 0xFFU);
+
+  // // logical address of target
+  // diag_uds_message_response->txBuffer_.emplace_back(received_doip_message_.payload[0]);
+  // diag_uds_message_response->txBuffer_.emplace_back(received_doip_message_.payload[1]);
+
+  // // copy the payload
+  // diag_uds_message_response->txBuffer_.insert(
+  //     diag_uds_message_response->txBuffer_.begin() + kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen,
+  //     uds_response_payload_.begin(), uds_response_payload_.end());
+
+  // if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
+  //   running_ = false;
+  //   logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+  //     msg << "Sending of Diagnostic Response message success";
+  //   });
+  // }
+}
+
+
+void DmConversation::SendDiagnosticPendingMessageResponse(const DoipMessage &doip_message) {
+  // TcpMessagePtr diag_uds_message_response{std::make_unique<TcpMessage>()};
+  // // create header
+  // diag_uds_message_response->txBuffer_.reserve(kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen +
+  //                                              uds_pending_response_payload_.size());
+  // CreateDoipGenericHeader(diag_uds_message_response->txBuffer_, kDoip_DiagMessage_Type,
+  //                         kDoip_DiagMessage_ReqResMinLen + uds_pending_response_payload_.size());
+
+  // // logical address of client
+  // diag_uds_message_response->txBuffer_.emplace_back(logical_address_ >> 8U);
+  // diag_uds_message_response->txBuffer_.emplace_back(logical_address_ & 0xFFU);
+
+  // // logical address of target
+  // diag_uds_message_response->txBuffer_.emplace_back(received_doip_message_.payload[0]);
+  // diag_uds_message_response->txBuffer_.emplace_back(received_doip_message_.payload[1]);
+
+  // // copy the payload
+  // diag_uds_message_response->txBuffer_.insert(
+  //     diag_uds_message_response->txBuffer_.begin() + kDoipheadrSize + kDoip_DiagMessage_ReqResMinLen,
+  //     uds_pending_response_payload_.begin(), uds_pending_response_payload_.end());
+
+  // if (tcp_connection_->Transmit(std::move(diag_uds_message_response))) {
+  //   running_ = false;
+  //   // logger::LibGtestLogger::GetLibGtestLogger().GetLogger().LogInfo(__FILE__, __LINE__, "", [](std::stringstream &msg) {
+  //   //   msg << "Sending of Diagnostic Pending Response message success";
+  //   // });
+  // }
+}
+
 // Indicate message Diagnostic message reception over TCP to user
 std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr>
 DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
@@ -248,6 +458,41 @@ DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
                                 uds_transport::ProtocolKind protocol_kind, std::vector<uint8_t> payload_info) {
   std::pair<uds_transport::UdsTransportProtocolMgr::IndicationResult, uds_transport::UdsMessagePtr> ret_val{
       uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
+  DoipMessage received_doip_message;
+
+
+  // received_doip_message.host_ip_address = tcp_rx_message->host_ip_address_;
+  // received_doip_message.port_num = tcp_rx_message->host_port_num_;
+  received_doip_message.protocol_version = payload_info[0];
+  received_doip_message.protocol_version_inv = payload_info[1];
+  received_doip_message.payload_type = GetDoIPPayloadType(payload_info);
+  received_doip_message.payload_length = GetDoIPPayloadLength(payload_info);
+  if (received_doip_message.payload_length > 0U) {
+    received_doip_message.payload.insert(received_doip_message.payload.begin(),
+                                          payload_info.begin() + kDoipheadrSize,
+                                          payload_info.end());
+  }
+  logger::DiagServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, "", [&](std::stringstream &msg) {
+            msg << "DmConversation::IndicateMessage receive data:";
+            for (int i=0; i<payload_info.size(); i++) {
+              msg << static_cast<int>(payload_info[i]) << " ";
+            }
+          });
+  // Trigger async transmission
+  {
+    std::lock_guard<std::mutex> const lck{mutex_};
+    job_queue_.emplace([this, received_doip_message]() {
+      if (received_doip_message.payload_type == kDoip_RoutingActivation_ReqType) {
+        this->SendRoutingActivationResponse(received_doip_message);
+      } else if (received_doip_message.payload_type == kDoip_DiagMessage_Type) {
+        this->SendDiagnosticMessageAckResponse(received_doip_message);
+      }
+    });
+    running_ = true;
+    cond_var_.notify_all();
+  }
+#if 0  
   // Verify the payload received :-
   if (!payload_info.empty()) {
     // Check for size, else kIndicationOverflow
@@ -296,9 +541,25 @@ DmConversation::IndicateMessage(uds_transport::UdsMessage::Address source_addr,
               << "Diagnostic Conversation Rx Payload size 0 received";
         });
   }
+
+  uint8_t sid = 0x10;
+
+  if (uds_services_[sid]->GetSessionType()) {
+    if (uds_services_[sid]->GetSecurityLevel() == 0) {
+
+    }
+  }
+  job_queue_.emplace([this, sid]() { this->uds_services_[sid]->Service(); });
+  
+  running_ = true;
+  cond_var_.notify_all();
+#endif
   return ret_val;
 }
 
+void DmConversation::Service() {
+
+}
 // Hands over a valid message to conversion
 void DmConversation::HandleMessage(uds_transport::UdsMessagePtr message) {
   if (message != nullptr) {

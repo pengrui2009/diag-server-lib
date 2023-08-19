@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +70,7 @@ void ConversationManager::CreateConversationConfig(diag::server::config_parser::
     for (uint8_t conv_count = 0U; conv_count < config.num_of_conversation; conv_count++) {
       ::uds_transport::conversion_manager::ConversionIdentifierType conversion_identifier{};
       conversion_identifier.rx_buffer_size = config.conversations[conv_count].rx_buffer_size;
-      conversion_identifier.p2_client_max = config.conversations[conv_count].p2_client_max;
+      conversion_identifier.p2_server_max = config.conversations[conv_count].p2_server_max;
       conversion_identifier.p2_star_client_max = config.conversations[conv_count].p2_star_client_max;
       conversion_identifier.source_address = config.conversations[conv_count].source_address;
       conversion_identifier.tcp_address = config.conversations[conv_count].network.tcp_ip_address;

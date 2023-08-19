@@ -1,5 +1,5 @@
 /* Diagnostic server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,9 +55,8 @@ public:
 
   // Get or Create Udp connection
   std::shared_ptr<uds_transport::Connection> FindOrCreateUdpConnection(
-      const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view udp_ip_address,
-      uint16_t port_num, std::uint16_t logical_address) override;
-
+      const std::shared_ptr<uds_transport::ConversionHandler> &conversion_handler, std::string_view udpIpaddress,
+      uint16_t portNum, std::string_view unicast_udpIpaddress, uint16_t unicast_portNum, std::uint16_t logical_address) override;
 private:
   // store handle id
   uds_transport::UdsTransportProtocolHandlerID handle_id_e;
@@ -66,9 +65,9 @@ private:
   // Create Doip Connection Manager
   std::unique_ptr<connection::DoipConnectionManager> doip_connection_mgr_ptr;
 
-  std::unique_ptr<doip_handler::DoipTcpHandler> doip_tcp_handler_;
+  // std::unique_ptr<doip_handler::DoipTcpHandler> doip_tcp_handler_;
 
-  std::unique_ptr<doip_handler::DoipUdpHandler> doip_udp_handler_;
+  // std::unique_ptr<doip_handler::DoipUdpHandler> doip_udp_handler_;
 };
 
 }  // namespace transportProtocolHandler

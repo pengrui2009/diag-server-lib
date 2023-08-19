@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,7 +53,7 @@ public:
   // Get or Create an Udp Connection
   virtual std::shared_ptr<Connection> FindOrCreateUdpConnection(
       const std::shared_ptr<ConversionHandler> &conversion_handler, std::string_view udpIpaddress,
-      uint16_t portNum, std::uint16_t logical_address) = 0;
+      uint16_t portNum, std::string_view unicast_udpIpaddress, uint16_t unicast_portNum, std::uint16_t logical_address) = 0;
 
 protected:
   UdsTransportProtocolHandlerID handler_id_;

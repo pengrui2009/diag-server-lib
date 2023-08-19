@@ -46,7 +46,6 @@ if (${ENABLE_WIN_SYSTEM} MATCHES "ON")
         # link all dynamic libraries
         target_link_libraries(${PROJECT_NAME} PRIVATE
                 diag-client
-                boost-support
                 Threads::Threads
                 libboost_system-mgw7-mt-s-x64-1_78.a
                 )
@@ -54,7 +53,6 @@ else()
         #link target directory
         target_link_libraries(${PROJECT_NAME} PRIVATE
                 diag-client
-                boost-support
                 Threads::Threads
                 ${Boost_LIBRARIES}
                 )

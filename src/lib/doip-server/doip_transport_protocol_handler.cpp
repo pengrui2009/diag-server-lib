@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,14 +64,18 @@ std::shared_ptr<uds_transport::Connection> DoipTransportProtocolHandler::FindOrC
 }
 
 std::shared_ptr<uds_transport::Connection> DoipTransportProtocolHandler::FindOrCreateUdpConnection(
-    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view udp_ip_address,
-    uint16_t port_num, std::uint16_t logical_address) {
+    const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view broadcast_ip_address,
+    uint16_t broadcast_port_num, std::string_view unicast_ip_address, uint16_t unicast_port_num, 
+    std::uint16_t logical_address) {
   ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
-      __FILE__, __LINE__, __func__, [udp_ip_address](std::stringstream &msg) {
+      __FILE__, __LINE__, __func__, [broadcast_ip_address, broadcast_port_num, unicast_ip_address, unicast_port_num, logical_address](std::stringstream &msg) {
         msg << "Doip Udp protocol requested with local endpoint : "
-            << "<Udp: " << udp_ip_address << ">";
+            << "<Broadcast Udp: " << broadcast_ip_address << "," << "Port: " << broadcast_port_num << ","
+            << "<Unicast Udp: " << unicast_ip_address << "," << "Port: " << unicast_port_num << ","
+            << "Logical_address: " << logical_address << ">";
       });
-  return (doip_connection_mgr_ptr->FindOrCreateUdpConnection(conversation, udp_ip_address, port_num, logical_address));
+  return (doip_connection_mgr_ptr->FindOrCreateUdpConnection(conversation, broadcast_ip_address, broadcast_port_num, 
+    unicast_ip_address, unicast_port_num, logical_address));
 }
 }  // namespace transportProtocolHandler
 }  // namespace doip_server

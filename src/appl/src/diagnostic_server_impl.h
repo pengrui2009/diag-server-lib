@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ namespace server {
 class DiagServerImpl final : public diag::server::DiagServer {
 public:
   // ctor
-  explicit DiagServerImpl(std::string_view dm_client_config);
+  explicit DiagServerImpl(std::string_view dm_server_config);
 
   // dtor
   ~DiagServerImpl() override = default;
@@ -34,8 +34,8 @@ public:
   void DeInitialize() override;
 
   // Get Required Conversation based on Conversation Name
-  diag::server::conversation::DiagServerConversation& StartDiagnosticServerConversation(
-      std::string_view conversation_name) override;
+  diag::server::conversation::DiagServerConversation& CreateDiagnosticServerConversation(
+    uint16_t logical_address) override;
 
   // Send Vehicle Identification Request and get response
   std::pair<diag::server::DiagServer::VehicleResponseResult,

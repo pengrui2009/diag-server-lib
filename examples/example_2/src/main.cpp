@@ -1,5 +1,5 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,37 +8,37 @@
 
 #include <iostream>
 
-#include "uds_message.h"
+// #include "uds_message.h"
 
-// includes from diag-client library
-#include "include/create_diagnostic_server.h"
-#include "include/diagnostic_server.h"
-#include "include/diagnostic_server_uds_message_type.h"
-#include "include/diagnostic_server_vehicle_info_message_type.h"
-
+// // includes from diag-client library
+// #include "include/create_diagnostic_server.h"
+// #include "include/diagnostic_server.h"
+// #include "include/diagnostic_server_uds_message_type.h"
+// #include "include/diagnostic_server_vehicle_info_message_type.h"
+#include "sockets/udp_socket_handler.h"
 /*
  * Main Entry point of diag client example 
  * Example to find available ECU in a network through vehicle discovery and connecting to it.
  */
 int main() {
   // Create the Diagnostic client and pass the config for creating internal properties
-  std::unique_ptr<diag::client::DiagServer> diag_client{
-      diag::client::CreateDiagnosticServer("etc/diag_client_config.json")};
+//   std::unique_ptr<diag::client::DiagServer> diag_client{
+//       diag::client::CreateDiagnosticServer("etc/diag_client_config.json")};
 
-  // Initialize the Diagnostic Server library
-  diag_client->Initialize();
+//   // Initialize the Diagnostic Server library
+//   diag_client->Initialize();
 
-  // Get conversation for tester one by providing the conversation name configured
-  // in diag_client_config file passed while creating the diag client
-  diag::client::conversation::DiagServerConversation &diag_client_conversation {
-      diag_client->GetDiagnosticClientConversation("DiagTesterOne")};
+//   // Get conversation for tester one by providing the conversation name configured
+//   // in diag_client_config file passed while creating the diag client
+//   diag::client::conversation::DiagServerConversation &diag_client_conversation {
+//       diag_client->GetDiagnosticClientConversation("DiagTesterOne")};
 
-  // Start the conversation for tester one
-  diag_client_conversation.Startup();
+//   // Start the conversation for tester one
+//   diag_client_conversation.Startup();
 
-  // Create a vehicle info request for finding ECU with matching VIN - ABCDEFGH123456789
-  diag::client::vehicle_info::VehicleInfoListRequestType
-      vehicle_info_request{1U, "ABCDEFGH123456789"};
+//   // Create a vehicle info request for finding ECU with matching VIN - ABCDEFGH123456789
+//   diag::client::vehicle_info::VehicleInfoListRequestType
+//       vehicle_info_request{1U, "ABCDEFGH123456789"};
   // Send Vehicle Identification request and get the response with available ECU information
   // std::pair<diag::client::DiagServer::VehicleResponseResult,
   //           diag::client::vehicle_info::VehicleInfoMessageResponseUniquePtr>
@@ -85,9 +85,21 @@ int main() {
   // }
 
   // shutdown the conversation
-  diag_client_conversation.Shutdown();
+//   diag_client_conversation.Shutdown();
 
   // important to release all the resources by calling de-initialize
-  diag_client->DeInitialize();
+//   diag_client->DeInitialize();
+    doip_handler::udpSocket::kDoip_String udp_ip_address = "239.255.0.1";
+    uint16_t udp_port_num = 13400;
+    doip_handler::udpSocket::DoipUdpSocketHandler::PortType port_type = doip_handler::udpSocket::DoipUdpSocketHandler::PortType::kUdp_Broadcast;
+    std::unique_ptr<doip_handler::udpSocket::DoipUdpSocketHandler> udp_handler = 
+        std::make_unique<doip_handler::udpSocket::DoipUdpSocketHandler>(udp_ip_address, udp_port_num, port_type,
+            [](doip_handler::udpSocket::UdpMessagePtr msg) {
+                std::cout << "ip:" << msg->host_ip_address_ << " port:" << msg->host_port_num_ << std::endl;
+            });
+    udp_handler->Start();
+    while(1) {
+        sleep(1000);
+    }
   return (0);
 }

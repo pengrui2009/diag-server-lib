@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,35 +16,44 @@ namespace config_parser {
 
 // Doip network property type
 struct DoipNetworkType {
+  // protocol kind
+  std::string protocol_kind;
   // local tcp address
   std::string tcp_ip_address;
+  // tls
+  bool tls;
 };
 
 // Properties of a single conversation
 struct ConversationType {
-  // store p2 client timeout
-  std::uint16_t p2_client_max;
-  // store p2 star client timeout
-  std::uint16_t p2_star_client_max;
+  // store p2 server timeout
+  std::uint16_t p2_server_max;
+  // store p2 star server timeout
+  std::uint16_t p2_star_server_max;
+  // store p4 server timeout
+  std::uint16_t p4_server_max;
   // store receive buffer size
   std::uint16_t rx_buffer_size;
-  // store source address of client
-  std::uint16_t source_address;
-  // store the client conversation name
-  std::string conversation_name;
+  // store logical address of server
+  std::uint16_t logical_address;
+  // store the server VIN name
+  std::string vin_name;
+  // store the server eid name
+  std::string eid_name;  
+  // store the server gid name
+  std::string gid_name;
   // store the doip network item
   DoipNetworkType network;
 };
 
-// Properties of diag client configuration
+// Properties of diag server configuration
 struct DCMServerConfig {
   // local udp address
   std::string udp_ip_address;
   // broadcast address
   std::string udp_broadcast_address;
   // conversation property
-  // store all conversations
-  std::vector<ConversationType> conversations;
+  ConversationType conversation_property;
 };
 }  // namespace config_parser
 }  // namespace server

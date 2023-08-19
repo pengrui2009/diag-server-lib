@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,8 @@ using Logger = utility::logger::Logger;
 class DiagServerLogger {
 public:
   auto static GetDiagServerLogger() noexcept -> DiagServerLogger& {
-    static DiagServerLogger diag_client_logger_;
-    return diag_client_logger_;
+    static DiagServerLogger diag_server_logger_;
+    return diag_server_logger_;
   }
 
   auto GetLogger() noexcept -> Logger& { return logger_; }

@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,23 +21,25 @@ namespace connection {
  @ Class Description : Class to create connection to tcp & udp handler                              
  */
 // ctor
-DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversion,
+DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversion, 
+                                     doip_handler::DoipTcpHandler &tcp_transport_handler,
                                      std::string_view local_tcp_address, uint16_t tcp_port_num, std::uint16_t logical_address)
     : logical_address_(logical_address),
       uds_transport::Connection(1, conversion),
-      tcp_transport_handler_(std::make_unique<doip_handler::DoipTcpHandler>(local_tcp_address, tcp_port_num)) {}
-    
+      tcp_transport_handler_{tcp_transport_handler},
+      tcp_channel_(tcp_transport_handler.CreateDoipChannel(logical_address_, *this)) {}
 
 // Initialize
 DoipTcpConnection::InitializationResult DoipTcpConnection::Initialize() {
     // (void) tcp_transport_handler_->Initialize();
+    tcp_channel_.Initialize();
     return (InitializationResult::kInitializeOk);
 }
 
 // Start the Tp Handlers
 void DoipTcpConnection::Start() {
     // tcp_transport_handler_->Start(); 
-    tcp_channel_ = tcp_transport_handler_->CreateDoipChannel(conversation_, logical_address_);
+    // tcp_channel_ = tcp_transport_handler_->CreateDoipChannel(conversation_, logical_address_);
 }
 
 // Stop the Tp handlers
@@ -73,7 +75,7 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
                                    uds_transport::Priority priority, uds_transport::ProtocolKind protocol_kind,
                                    std::vector<uint8_t> payloadInfo) {
     // Send Indication to conversion
-    return (tcp_channel_.IndicateMessage(source_addr, target_addr, type, channel_id, size, priority, protocol_kind,
+    return (conversation_->IndicateMessage(source_addr, target_addr, type, channel_id, size, priority, protocol_kind,
                                          payloadInfo));
     // return {uds_transport::UdsTransportProtocolMgr::IndicationResult::kIndicationNOk, nullptr};
 }
@@ -81,9 +83,10 @@ DoipTcpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 // Function to transmit the uds message
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
+    
     // uds_transport::ChannelID channel_id = 0;
-    // return (tcp_transport_handler_->Transmit(std::move(message), 0));
-    return (tcp_channel_.Transmit(std::move(message), 0));
+    return (tcp_channel_.Transmit(std::move(message)));
+    // return (tcp_channel_.Transmit(std::move(message)));
     // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
@@ -99,17 +102,20 @@ void DoipTcpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
  */
 // ctor
 DoipUdpConnection::DoipUdpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversation,
-                                     std::string_view udp_ip_address, uint16_t port_num, std::uint16_t logical_address)
+                                     std::string_view broadcast_ip_address, uint16_t broadcast_port_num, 
+                                     std::string_view unicast_ip_address, uint16_t unicast_port_num,
+                                     std::uint16_t logical_address)
     : logical_address_(logical_address),
       uds_transport::Connection(1, conversation),
-      udp_transport_handler_{std::make_unique<doip_handler::DoipUdpHandler>(udp_ip_address, port_num, *this)} 
+      udp_transport_handler_{std::make_unique<doip_handler::DoipUdpHandler>(broadcast_ip_address, broadcast_port_num, 
+        unicast_ip_address, unicast_port_num, *this)} 
     {
 
     }
 
 // Initialize
 DoipUdpConnection::InitializationResult DoipUdpConnection::Initialize() {
-    // (void) udp_transport_handler_->Initialize();
+    (void) udp_transport_handler_->Initialize();
     return InitializationResult::kInitializeOk;
 }
 
@@ -157,8 +163,9 @@ DoipUdpConnection::IndicateMessage(uds_transport::UdsMessage::Address source_add
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipUdpConnection::Transmit(
     uds_transport::UdsMessageConstPtr message) {
     // uds_transport::ChannelID channel_id = 0;
-    // udp_transport_handler_->Transmit(/*std::move(message), 0*/);    
-    return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
+
+    return udp_transport_handler_->Transmit(std::move(message));
+    // return uds_transport::UdsTransportProtocolMgr::TransmissionResult::kTransmitOk;
 }
 
 // Hands over a valid message to conversion
@@ -170,7 +177,7 @@ void DoipUdpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
 DoipConnectionManager::DoipConnectionManager(std::uint16_t logical_address) 
     : logical_address_(logical_address)
 {
-
+    
 }
 
 DoipConnectionManager::~DoipConnectionManager()
@@ -184,17 +191,21 @@ std::shared_ptr<DoipTcpConnection> DoipConnectionManager::FindOrCreateTcpConnect
     std::string_view local_tcp_address, 
     uint16_t tcp_port_num, 
     std::uint16_t logical_address) {
-    return (std::make_shared<DoipTcpConnection>(conversation, local_tcp_address, tcp_port_num, logical_address_));
+
+    tcp_transport_handler_ = std::make_unique<doip_handler::DoipTcpHandler>(local_tcp_address, tcp_port_num);
+
+    return (std::make_shared<DoipTcpConnection>(conversation, *tcp_transport_handler_, local_tcp_address, tcp_port_num, logical_address_));
     // return CreateDoipChannel(conversation, logical_address);
 }
 
 // Function to create new connection to handle doip udp request and response
 std::shared_ptr<DoipUdpConnection> DoipConnectionManager::FindOrCreateUdpConnection(
     const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
-    std::string_view local_udp_address, 
-    uint16_t udp_port_num, 
+    std::string_view broadcast_udp_address, uint16_t broadcast_port_num, 
+    std::string_view unicast_udp_address, uint16_t unicast_port_num, 
     std::uint16_t logical_address) {
-    return (std::make_shared<DoipUdpConnection>(conversation, local_udp_address, udp_port_num, logical_address_));
+    return (std::make_shared<DoipUdpConnection>(conversation, broadcast_udp_address, broadcast_port_num, 
+        unicast_udp_address, unicast_port_num, logical_address_));
 }
 }  // namespace connection
 }  // namespace doip_server

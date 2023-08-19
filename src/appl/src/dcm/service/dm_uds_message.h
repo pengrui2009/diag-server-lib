@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,8 @@ namespace uds_message {
 class DmUdsMessage final : public uds_transport::UdsMessage {
 public:
   // ctor
+  DmUdsMessage();
+
   DmUdsMessage(Address sa, Address ta, IpAddress host_ip_address, uds_transport::ByteVector &payload);
 
   // dtor
@@ -38,7 +40,7 @@ private:
   std::string host_ip_address_;
 
   // store only UDS payload to be sent
-  uds_transport::ByteVector &uds_payload_;
+  uds_transport::ByteVector uds_payload_;
 
   // add new metaInfo to this message.
   void AddMetaInfo(std::shared_ptr<const MetaInfoMap> meta_info) override {
@@ -51,6 +53,8 @@ private:
   // return the underlying buffer for write access
   uds_transport::ByteVector &GetPayload() override { return uds_payload_; }
 
+  void SetPayload(const std::vector<uint8_t> &payload) noexcept override {uds_payload_ = payload;}
+
   // Get the source address of the uds message.
   Address GetSa() const noexcept override { return source_address_; }
 
@@ -60,11 +64,14 @@ private:
   // Get the target address type (phys/func) of the uds message.
   TargetAddressType GetTaType() const noexcept override { return target_address_type_; }
 
+  void SetRemoteIpAddress(const IpAddress &ipaddr) noexcept override { host_ip_address_ = ipaddr;}
   // Get Host Ip address
-  IpAddress GetHostIpAddress() const noexcept override { return host_ip_address_; }
+  IpAddress GetRemoteIpAddress() const noexcept override { return host_ip_address_; }
 
   // Get Host port number
-  PortNumber GetHostPortNumber() const noexcept override { return 13400U; }
+  PortNumber GetRemotePortNumber() const noexcept override { return 13400U; }
+
+  void SetRemotePortNumber(const PortNumber &portnum) noexcept override { }
 };
 
 class DmUdsResponse final : public UdsMessage {
@@ -84,6 +91,7 @@ private:
 
   // return the underlying buffer for write access
   ByteVector &GetPayload() override { return uds_payload_; }
+
 
   // Get Host Ip address
   IpAddress GetHostIpAddress() const noexcept override { return host_ip_address_; }

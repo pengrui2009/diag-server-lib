@@ -1,18 +1,20 @@
 /* Diagnostic Server library
-* Copyright (C) 2023  Avijit Dey
+* Copyright (C) 2023  Rui Peng
 *
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-#ifndef DIAG_SERVER_DOIP_UDP_HANDLER_H
-#define DIAG_SERVER_DOIP_UDP_HANDLER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_
 
 #include <string>
+#include <queue>
 
 #include "common/doip_payload_type.h"
 
 #include "sockets/udp_socket_handler.h"
+#include "uds_transport/protocol_mgr.h"
 
 namespace doip_server {
 
@@ -39,7 +41,8 @@ public:
   };
 
   // ctor
-  DoipUdpHandler(std::string_view local_udp_address, uint16_t udp_port_num, 
+  DoipUdpHandler(std::string_view broadcast_udp_address, uint16_t broadcast_port_num, 
+    std::string_view unicast_udp_address, uint16_t unicast_port_num,
     doip_server::connection::DoipUdpConnection &doip_connection);
 
   // dtor
@@ -55,16 +58,17 @@ public:
   void HandleMessage(UdpMessagePtr udp_rx_message);
 
   // Function to trigger transmission of udp messages
-  void Transmit();
+  // void Transmit();
+  uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(uds_transport::UdsMessageConstPtr message);
 
   // function to create the expected VehicleIdentification Response
   void SetExpectedVehicleIdentificationResponseToBeSent(VehicleAddrInfo &vehicle_info);
 
   // function to set the expectation of VIN on the request received
-  auto VerifyVehicleIdentificationRequestWithExpectedVIN(std::string_view vin) noexcept -> bool;
+  // auto VerifyVehicleIdentificationRequestWithExpectedVIN(std::string_view vin) noexcept -> bool;
 
   // function to set the expectation of EID on the request received
-  auto VerifyVehicleIdentificationRequestWithExpectedEID(std::string_view eid) noexcept -> bool;
+  // auto VerifyVehicleIdentificationRequestWithExpectedEID(std::string_view eid) noexcept -> bool;
 
 private:
   // reference to doip connection
@@ -80,7 +84,12 @@ private:
   VehicleAddrInfo expected_vehicle_info_{};
 
   // Received doip message
-  DoipMessage received_doip_message_{};
+  // DoipMessage received_doip_message_{};
+  
+  // Remote endpoint
+  boost_support::socket::udp::UdpMessageType::ipAddressType remote_ip_address_{""};
+
+  uint16_t remote_port_num_{13400};
 
   // flag to terminate the thread
   std::atomic_bool exit_request_{false};
@@ -99,7 +108,7 @@ private:
 
 private:
   // function to process udp unicast message received
-  void ProcessUdpUnicastMessage(UdpMessagePtr udp_rx_message);
+  // void ProcessUdpUnicastMessage(UdpMessagePtr udp_rx_message);
 
   // Function to get payload type
   static auto GetDoIPPayloadType(std::vector<uint8_t> payload) noexcept -> uint16_t;
@@ -115,4 +124,4 @@ private:
 
 }  // namespace doip_handler
 }  // namespace doip_server
-#endif  //DIAG_SERVER_DOIP_UDP_HANDLER_H
+#endif  //DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_HANDLER_DOIP_UDP_HANDLER_H_

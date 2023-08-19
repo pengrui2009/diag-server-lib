@@ -1,5 +1,5 @@
 #  Diagnostic Server library CMake File
-#  Copyright (C) 2023  Avijit Dey
+#  Copyright (C) 2023  Rui Peng
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #
 # Entry Project CMake
 #
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 project(diag-server)
 
 # Cmake options

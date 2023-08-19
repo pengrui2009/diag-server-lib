@@ -1,12 +1,12 @@
-/* Diagnostic Client library
- * Copyright (C) 2023  Avijit Dey
+/* Diagnostic Server library
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
-#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H
 
 #include <string_view>
 
@@ -18,6 +18,7 @@ namespace doip_server {
 //forward declaration
 namespace doip_handler {
 class DoipTcpHandler;
+class DoipChannel;
 }
 
 namespace doip_handler {
@@ -36,6 +37,7 @@ public:
 
   // ctor
   DoipTcpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversion,
+                    doip_handler::DoipTcpHandler &tcp_transport_handler,
                     std::string_view tcp_ip_address, uint16_t port_num, std::uint16_t logical_address);
 
   // dtor
@@ -77,9 +79,9 @@ public:
 private:
   std::uint16_t logical_address_;
   // doip channel
-  DoipChannel &tcp_channel_;
+  doip_handler::DoipChannel &tcp_channel_;
   // Tcp Transport Handler
-  std::unique_ptr<doip_handler::DoipTcpHandler> tcp_transport_handler_;
+  doip_handler::DoipTcpHandler &tcp_transport_handler_;
 };
 
 /*
@@ -93,7 +95,8 @@ public:
 
   // ctor
   DoipUdpConnection(const std::shared_ptr<uds_transport::ConversionHandler> &conversation,
-                    std::string_view udp_ip_address, uint16_t port_num, std::uint16_t logical_address);
+                    std::string_view broadcast_ip_address, uint16_t broadcast_port_num, 
+                    std::string_view unicast_ip_address, uint16_t unicast_port_num, std::uint16_t logical_address);
 
   // dtor
   ~DoipUdpConnection() override = default;
@@ -156,12 +159,16 @@ public:
 
   // Function to create new connection to handle doip udp request and response
   std::shared_ptr<DoipUdpConnection> FindOrCreateUdpConnection(
-      const std::shared_ptr<uds_transport::ConversionHandler> &conversation, std::string_view udp_ip_address,
-      uint16_t port_num, std::uint16_t logical_address);
+      const std::shared_ptr<uds_transport::ConversionHandler> &conversation, 
+      std::string_view broadcast_udp_address, uint16_t broadcast_port_num, 
+      std::string_view unicast_udp_address, uint16_t unicast_port_num,
+      std::uint16_t logical_address);
 private:
-  std::uint16_t logical_address_;      
+  std::uint16_t logical_address_; 
+    // Tcp Transport Handler
+  std::unique_ptr<doip_handler::DoipTcpHandler> tcp_transport_handler_;     
 };
 }  // namespace connection
-}  // namespace doip_client
+}  // namespace doip_server
 
-#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_CLIENT_CONNECTION_CONNECTION_MANAGER_H
+#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_CONNECTION_CONNECTION_MANAGER_H

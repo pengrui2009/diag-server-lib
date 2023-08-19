@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,13 @@
 namespace diag {
 namespace server {
 namespace uds_message {
+
+DmUdsMessage::DmUdsMessage() :
+  uds_transport::UdsMessage(),
+  uds_payload_{} {
+
+} 
+
 DmUdsMessage::DmUdsMessage(Address sa, Address ta, IpAddress host_ip_address, uds_transport::ByteVector &payload)
     : uds_transport::UdsMessage(),
       source_address_{sa},

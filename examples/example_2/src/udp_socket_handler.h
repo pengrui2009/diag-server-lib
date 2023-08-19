@@ -6,8 +6,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_SOCKETS_UDP_SOCKET_HANDLER_H_
-#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_SOCKETS_UDP_SOCKET_HANDLER_H_
+#ifndef DIAG_SERVER_UDP_SOCKET_HANDLER_H
+#define DIAG_SERVER_UDP_SOCKET_HANDLER_H
 
 //includes
 #include <functional>
@@ -71,4 +71,4 @@ private:
 }  // namespace udpSocket
 }  // namespace doip_handler
 
-#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_SOCKETS_TCP_SOCKET_HANDLER_H_
+#endif  // DIAG_SERVER_UDP_SOCKET_HANDLER_H

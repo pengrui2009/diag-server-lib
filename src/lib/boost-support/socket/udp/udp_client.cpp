@@ -1,5 +1,5 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,12 @@ createUdpClientSocket::createUdpClientSocket(std::string_view local_ip_address, 
       }
     }
   });
+  common::logger::LibBoostLogger::GetLibBoostLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, __func__, [local_ip_address, local_port_num, port_type](std::stringstream &msg) {
+            msg << "createUdpClientSocket "
+                << "<ip:" << local_ip_address << ",port:" << local_port_num 
+                << " port_type:" << static_cast<int>(port_type) << ">";
+          });
 }
 
 // dtor
@@ -65,8 +71,11 @@ bool createUdpClientSocket::Open() {
     udp_socket_->set_option(reuse_address_option);
 
     if (port_type_ == PortType::kUdp_Broadcast) {
+      udp_socket_->set_option(boost::asio::ip::multicast::join_group(
+        boost::asio::ip::address_v4::from_string(local_ip_address_)
+        , boost::asio::ip::address_v4::from_string("0.0.0.0")));
       // Todo : change the hardcoded value of port number 13400
-      udp_socket_->bind(UdpSocket::endpoint(boost::asio::ip::address_v4::any(), 13400), ec);
+      udp_socket_->bind(UdpSocket::endpoint(boost::asio::ip::address_v4::any(), local_port_num_), ec);
       common::logger::LibBoostLogger::GetLibBoostLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, __func__, [](std::stringstream &msg) {
             msg << "Udp Bcast Socket Opened and bound to "
@@ -74,11 +83,11 @@ bool createUdpClientSocket::Open() {
           });
     } else {
       //bind to local address and random port
-      udp_socket_->bind(UdpSocket::endpoint(UdpIpAddress::from_string(local_ip_address_), local_port_num_), ec);
+      udp_socket_->bind(UdpSocket::endpoint(UdpIpAddress::from_string(local_ip_address_), 0), ec);
       common::logger::LibBoostLogger::GetLibBoostLogger().GetLogger().LogInfo(
           __FILE__, __LINE__, __func__, [this](std::stringstream &msg) {
             msg << "Udp Ucast Socket Opened and bound to "
-                << "<" << local_ip_address_ << "," << local_port_num_ << ">";
+                << "<" << local_ip_address_ << "," << 0 << ">";
           });
     }
     
@@ -162,6 +171,11 @@ bool createUdpClientSocket::Destroy() {
 
 // function invoked when datagram is received
 void createUdpClientSocket::HandleMessage(const UdpErrorCodeType &error, std::size_t bytes_recvd) {
+  common::logger::LibBoostLogger::GetLibBoostLogger().GetLogger().LogInfo(
+          __FILE__, __LINE__, __func__, [this, bytes_recvd](std::stringstream &msg) {
+            msg << "HandleMessage, Udp Message received size: "
+                <<  bytes_recvd << "<" << local_ip_address_ << "," << local_port_num_ << ">";
+          });
   // Check for error
   if (error.value() == boost::system::errc::success) {
     if (local_ip_address_ != remote_endpoint_.address().to_string()) {

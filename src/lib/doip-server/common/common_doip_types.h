@@ -1,12 +1,12 @@
 /* Diagnostic Server library
- * Copyright (C) 2023  Avijit Dey
+ * Copyright (C) 2023  Rui Peng
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef DIAG_SERVER_COMMON_DOIP_TYPES_H_
-#define DIAG_SERVER_COMMON_DOIP_TYPES_H_
+#ifndef DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_COMMON_DOIP_TYPES_H_
+#define DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_COMMON_DOIP_TYPES_H_
 
 /* DoIP Port Number - Unsecured */
 constexpr uint16_t kDoipPort = 13400U;
@@ -118,4 +118,4 @@ constexpr uint32_t kDoIPDiagnosticAckTimeout = 2000;  // 2 sec
  * */
 constexpr uint32_t kDoIPCtrl = 2000;  // 2 sec
 
-#endif  // DIAG_SERVER_COMMON_DOIP_TYPES_H_
+#endif  // DIAGNOSTIC_SERVER_LIB_LIB_DOIP_SERVER_COMMON_DOIP_TYPES_H_
