@@ -47,6 +47,10 @@ void DoipTcpConnection::Stop() {
     // tcp_transport_handler_->Stop(); 
 }
 
+bool DoipTcpConnection::IsClientConnected() {
+    tcp_channel_.
+}
+
 // Check if already connected to host
 // bool DoipTcpConnection::IsConnectToHost() { 
 //     // return (tcp_transport_handler_->IsConnectToHost());
@@ -129,6 +133,9 @@ void DoipUdpConnection::Stop() {
     // udp_transport_handler_->Stop(); 
 }
 
+bool DoipUdpConnection::IsClientConnected() {
+    return true;
+}
 // Check if already connected to host
 // bool DoipUdpConnection::IsConnectToHost() { 
 //     return false; 

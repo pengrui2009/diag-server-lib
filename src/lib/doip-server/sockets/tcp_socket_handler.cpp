@@ -28,6 +28,7 @@ DoipTcpSocketHandler::TcpConnectionHandler::TcpConnectionHandler(std::unique_ptr
             // socket is disconnected
             tcp_connection_->Shutdown();
             running_ = false;
+            connection_state_ = false;
           }
         }
       }

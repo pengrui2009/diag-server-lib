@@ -43,6 +43,10 @@ public:
     // stop the reception thread
     void DeInitialize();
 
+    bool GetConnectionState() {
+      return connection_state_.load();
+    }
+
     // function to trigger transmission
     // true on success else false
     bool Transmit(TcpMessageConstPtr tcp_tx_message);
@@ -53,6 +57,9 @@ public:
 
     // store connection
     std::unique_ptr<TcpConnection> tcp_connection_;
+
+    // flag to the connection of tcp client
+    std::atomic_bool connection_state_;
 
     // flag to terminate the thread
     std::atomic_bool exit_request_;
