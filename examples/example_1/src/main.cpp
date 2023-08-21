@@ -43,12 +43,15 @@ int main() {
 
     // sleep(1000000);
     // Start the conversation for tester one
-    physical_diag_server_conversation.Startup();
+    
 
     // funcitonal_diag_server_conversation.Startup();
 
     while(1) {
-        sleep(1000);
+        if (!physical_diag_server_conversation.GetClientDiagState()) {
+            physical_diag_server_conversation.Startup();
+        }
+        usleep(100000);
     }
     // Create a vehicle info request for finding ECU with matching VIN - ABCDEFGH123456789
     // diag::server::vehicle_info::VehicleInfoListRequestType

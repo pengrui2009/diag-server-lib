@@ -108,7 +108,7 @@ public:
    * @remarks     Implemented requirements:
    *              DiagServerLib-Conversation-Connect
    */
-  virtual ConnectResult ConnectToDiagServer(std::uint16_t target_address, IpAddress host_ip_addr) = 0;
+  virtual ConnectResult ListenDiagClientConnect(std::uint16_t target_address, IpAddress host_ip_addr) = 0;
 
   /**
    * @brief       Function to disconnect from Diagnostic Server
@@ -117,7 +117,7 @@ public:
    * @remarks     Implemented requirements:
    *              DiagServerLib-Conversation-Disconnect
    */
-  virtual DisconnectResult DisconnectFromDiagServer() = 0;
+  virtual DisconnectResult CloseDiagClientConnect() = 0;
 
   virtual bool GetClientDiagState() = 0;
   /**

@@ -264,7 +264,7 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
 
 // 
 bool DmConversation::GetClientDiagState() {
-  return connection_ptr_->GetConnectionState();
+  return connection_ptr_->GetState();
 }
 
 // Function to add register Connection to conversion

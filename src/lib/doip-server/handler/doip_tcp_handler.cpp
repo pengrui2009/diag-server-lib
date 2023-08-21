@@ -371,12 +371,15 @@ DoipChannel::~DoipChannel() {
 }
 
 void DoipChannel::Initialize() {
-  {
-    std::lock_guard<std::mutex> const lck{mutex_};
-    job_queue_.emplace([this]() { this->StartAcceptingConnection(); });
-    running_ = true;
-  }
-  cond_var_.notify_all();
+  // {
+  //   std::lock_guard<std::mutex> const lck{mutex_};
+  //   job_queue_.emplace([this]() { this->StartAcceptingConnection(); });
+  //   running_ = true;
+  // }
+  // cond_var_.notify_all();
+  std::lock_guard<std::mutex> const lck{mutex_};
+  this->StartAcceptingConnection();
+  running_ = true;
 }
 
 void DoipChannel::DeInitialize() {
@@ -398,7 +401,7 @@ void DoipChannel::StartAcceptingConnection() {
   }
 }
 
-bool DoipChannel::IsAlive() {
+bool DoipChannel::GetChannelState() {
   return tcp_connection_handler_->GetConnectionState();
 }
 // Function to transmit the uds message

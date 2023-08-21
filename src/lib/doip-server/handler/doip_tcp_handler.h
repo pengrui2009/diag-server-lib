@@ -213,7 +213,7 @@ public:
     void DeInitialize();
 
     // 
-    bool IsAlive();
+    bool GetChannelState();
     
     // Function to transmit the uds message
     uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(

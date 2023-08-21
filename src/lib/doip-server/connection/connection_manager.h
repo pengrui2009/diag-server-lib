@@ -52,7 +52,7 @@ public:
   // Stop the connection
   void Stop() override;
 
-  bool GetConnectionState() override;
+  bool GetState() override;
 
   // Check if already connected to host
 //   bool IsConnectToHost() override;
@@ -112,7 +112,7 @@ public:
   // Stop the connection
   void Stop() override;
 
-  bool GetConnectionState() override;
+  bool GetState() override;
   // Check if already connected to host
 //   bool IsConnectToHost() override;
 
