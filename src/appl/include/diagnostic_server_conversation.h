@@ -119,6 +119,7 @@ public:
    */
   virtual DisconnectResult DisconnectFromDiagServer() = 0;
 
+  virtual bool GetClientDiagState() = 0;
   /**
    * @brief       Function to send Diagnostic Request and get Diagnostic Response
    * @param[in]   message

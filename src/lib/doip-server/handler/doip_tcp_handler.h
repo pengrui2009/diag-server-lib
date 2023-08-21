@@ -212,6 +212,9 @@ public:
     // De-Initialize
     void DeInitialize();
 
+    // 
+    bool IsAlive();
+    
     // Function to transmit the uds message
     uds_transport::UdsTransportProtocolMgr::TransmissionResult Transmit(
       TcpMessagePtr message);

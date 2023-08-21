@@ -42,6 +42,7 @@ public:
   // Stop the connection
   virtual void Stop() = 0;
 
+  virtual bool GetConnectionState() = 0;
   // Check if already connected to host
   // virtual bool IsConnectToHost() = 0;
 

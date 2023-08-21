@@ -38,14 +38,14 @@ int main() {
     diag::server::conversation::DiagServerConversation &physical_diag_server_conversation {
         diag_server->CreateDiagnosticServerConversation(physical_address)};
 
-    diag::server::conversation::DiagServerConversation &funcitonal_diag_server_conversation {
-        diag_server->CreateDiagnosticServerConversation(functional_address)};
+    // diag::server::conversation::DiagServerConversation &funcitonal_diag_server_conversation {
+    //     diag_server->CreateDiagnosticServerConversation(functional_address)};
 
     // sleep(1000000);
     // Start the conversation for tester one
     physical_diag_server_conversation.Startup();
 
-    funcitonal_diag_server_conversation.Startup();
+    // funcitonal_diag_server_conversation.Startup();
 
     while(1) {
         sleep(1000);
@@ -101,7 +101,7 @@ int main() {
     // shutdown the conversation
     physical_diag_server_conversation.Shutdown();
 
-    funcitonal_diag_server_conversation.Shutdown();
+    // funcitonal_diag_server_conversation.Shutdown();
 
     // important to release all the resources by calling de-initialize
     diag_server->DeInitialize();

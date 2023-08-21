@@ -262,6 +262,11 @@ std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr
   return ret_val;
 }
 
+// 
+bool DmConversation::GetClientDiagState() {
+  return connection_ptr_->GetConnectionState();
+}
+
 // Function to add register Connection to conversion
 void DmConversation::RegisterConnection(std::shared_ptr<uds_transport::Connection> connection) {
   connection_ptr_ = std::move(connection);
