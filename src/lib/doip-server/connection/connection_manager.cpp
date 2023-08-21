@@ -32,19 +32,21 @@ DoipTcpConnection::DoipTcpConnection(const std::shared_ptr<uds_transport::Conver
 // Initialize
 DoipTcpConnection::InitializationResult DoipTcpConnection::Initialize() {
     // (void) tcp_transport_handler_->Initialize();
-    tcp_channel_.Initialize();
+    
     return (InitializationResult::kInitializeOk);
 }
 
 // Start the Tp Handlers
 void DoipTcpConnection::Start() {
     // tcp_transport_handler_->Start(); 
+    tcp_channel_.Initialize();
     // tcp_channel_ = tcp_transport_handler_->CreateDoipChannel(conversation_, logical_address_);
 }
 
 // Stop the Tp handlers
 void DoipTcpConnection::Stop() {
     // tcp_transport_handler_->Stop(); 
+    tcp_channel_.DeInitialize();
 }
 
 bool DoipTcpConnection::IsClientConnected() {
