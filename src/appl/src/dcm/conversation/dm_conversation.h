@@ -66,6 +66,9 @@ public:
   // @return value : DisconnectResult
   DisconnectResult DisconnectFromDiagServer() override;  
 
+  // 
+  bool GetClientDiagState() override;
+
   // Description   : Function to send Diagnostic Request and receive response
   // @param input  : Nothing
   // @return value : DisconnectResult

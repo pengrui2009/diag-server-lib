@@ -51,6 +51,9 @@ public:
     // true on success else false
     bool Transmit(TcpMessageConstPtr tcp_tx_message);
 
+    // get connection state: 1:connect or 0: disconnect
+    bool GetConnectionState();
+    
   private:
     // read handler
     TcpHandlerRead tcp_handler_read_;

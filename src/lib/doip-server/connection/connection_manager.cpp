@@ -49,10 +49,9 @@ void DoipTcpConnection::Stop() {
     tcp_channel_.DeInitialize();
 }
 
-bool DoipTcpConnection::IsClientConnected() {
-    tcp_channel_.
+bool DoipTcpConnection::GetConnectionState() {
+    return tcp_channel_.IsAlive();
 }
-
 // Check if already connected to host
 // bool DoipTcpConnection::IsConnectToHost() { 
 //     // return (tcp_transport_handler_->IsConnectToHost());
@@ -99,7 +98,7 @@ uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipTcpConnection::Tr
 // Hands over a valid message to conversion
 void DoipTcpConnection::HandleMessage(uds_transport::UdsMessagePtr message) {
     // send full message to conversion
-    // conversation_->HandleMessage(std::move(message));
+    conversation_->HandleMessage(std::move(message));
 }
 
 /*
@@ -135,7 +134,7 @@ void DoipUdpConnection::Stop() {
     // udp_transport_handler_->Stop(); 
 }
 
-bool DoipUdpConnection::IsClientConnected() {
+bool DoipUdpConnection::GetConnectionState() {
     return true;
 }
 // Check if already connected to host

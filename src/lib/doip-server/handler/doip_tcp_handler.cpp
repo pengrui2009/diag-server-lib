@@ -18,19 +18,95 @@
 namespace doip_server {
 namespace doip_handler {
 
+std::ostream &operator<<(std::ostream &msg, RoutingActivationHandler::RoutingActivationAckType act_type) {
+  switch (act_type.act_type_) {
+    case kDoip_RoutingActivation_ResCode_UnknownSA:
+      msg << "unknown source address.";
+      break;
+    case kDoip_RoutingActivation_ResCode_AllSocktActive:
+      msg << "all Socket active.";
+      break;
+    case kDoip_RoutingActivation_ResCode_DifferentSA:
+      msg << "SA different on already connected socket.";
+      break;
+    case kDoip_RoutingActivation_ResCode_ActiveSA:
+      msg << "SA active on different socket.";
+      break;
+    case kDoip_RoutingActivation_ResCode_AuthentnMissng:
+      msg << "missing authentication.";
+      break;
+    case kDoip_RoutingActivation_ResCode_ConfirmtnRejectd:
+      msg << "rejected confirmation.";
+      break;
+    case kDoip_RoutingActivation_ResCode_UnsupportdActType:
+      msg << "unsupported routing activation type.";
+      break;
+    case kDoip_RoutingActivation_ResCode_TLSRequired:
+      msg << "required TLS socket.";
+      break;
+    default:
+      msg << "unknown reason.";
+      break;
+  }
+  msg << " (0x" << std::hex << static_cast<int>(act_type.act_type_) << ")";
+  return msg;
+}
+
+std::ostream &operator<<(std::ostream &msg, DiagnosticMessageHandler::DiagAckType diag_ack_type) {
+  switch (diag_ack_type.ack_type_) {
+    case kDoip_DiagnosticMessage_NegAckCode_InvalidSA:
+      msg << "invalid source address.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_UnknownTA:
+      msg << "unknown target address.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_MessageTooLarge:
+      msg << "diagnostic message too large.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_OutOfMemory:
+      msg << "server out of memory.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_TargetUnreachable:
+      msg << "target unreachable.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_UnknownNetwork:
+      msg << "unknown network.";
+      break;
+    case kDoip_DiagnosticMessage_NegAckCode_TPError:
+      msg << "transport protocol error.";
+      break;
+    default:
+      msg << "unknown reason.";
+      break;
+  }
+  return msg;
+}
 
 auto RoutingActivationHandler::ProcessDoIPRoutingActivationRequest(DoipMessage &doip_payload) noexcept -> void {
-  // if (channel_.GetChannelState().GetRoutingActivationStateContext().GetActiveState().GetState() ==
+  //  if (tcp_channel_.GetChannelState().GetRoutingActivationStateContext().GetActiveState().GetState() ==
   //     RoutingActivationChannelState::kWaitForRoutingActivationRes) {
-  //   // get the logical address of server
-  //   uint16_t client_address = (uint16_t) ((doip_payload.payload[BYTE_POS_ZERO] << 8) & 0xFF00) |
-  //                             (uint16_t) (doip_payload.payload[BYTE_POS_ONE] & 0x00FF);
-  //   // get the logical address of Server
-  //   uint16_t server_address = (uint16_t) ((doip_payload.payload[BYTE_POS_TWO] << 8) & 0xFF00) |
-  //                             (uint16_t) (doip_payload.payload[BYTE_POS_THREE] & 0x00FF);
-  //   // get the ack code
-  //   RoutingActivationAckType const rout_act_type{doip_payload.payload[BYTE_POS_FOUR]};
-  //   switch (rout_act_type.act_type_) {
+        // get the logical address of server
+        uint16_t client_address = (uint16_t) ((doip_payload.payload[BYTE_POS_ZERO] << 8) & 0xFF00) |
+                              (uint16_t) (doip_payload.payload[BYTE_POS_ONE] & 0x00FF);
+        // get the logical address of Server
+        // uint16_t server_address = (uint16_t) ((doip_payload.payload[BYTE_POS_TWO] << 8) & 0xFF00) |
+        //                      (uint16_t) (doip_payload.payload[BYTE_POS_THREE] & 0x00FF);
+
+        // get the ack code
+        RoutingActivationAckType const rout_act_type{doip_payload.payload[BYTE_POS_TWO]};
+        switch (rout_act_type.act_type_) {
+        case kDoip_RoutingActivation_ReqActType_Default:
+            break;
+        case kDoip_RoutingActivation_ReqActType_WWHOBD:
+            break;
+        case kDoip_RoutingActivation_ReqActType_CentralSec:
+            break;
+        default:
+            ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogWarn(
+                __FILE__, __LINE__, __func__,
+                [&rout_act_type](std::stringstream &msg) { msg << "Routing activation denied due to " << rout_act_type; });
+            break;
+        }
   //     case kDoip_RoutingActivation_ResCode_RoutingSuccessful: {
   //       // routing successful
   //       final_state = RoutingActivationChannelState::kRoutingActivationSuccessful;
@@ -57,9 +133,9 @@ auto RoutingActivationHandler::ProcessDoIPRoutingActivationRequest(DoipMessage &
   //   }
   //   channel_.GetChannelState().GetRoutingActivationStateContext().TransitionTo(final_state);
   //   channel_.WaitCancel();
-  // } else {
-  //   /* ignore */
-  // }
+  //  } else {
+  //      /* ignore */
+  //  }
 }
 
 auto RoutingActivationHandler::SendRoutingActivationResponse(uds_transport::UdsMessageConstPtr &message) noexcept
@@ -152,6 +228,16 @@ DoipChannelHandlerImpl::~DoipChannelHandlerImpl() {
 
 auto DoipChannelHandlerImpl::HandleMessage(TcpMessagePtr tcp_rx_message) noexcept -> void {
   DoipMessage received_doip_message;
+
+  ::doip_handler::logger::DoipServerLogger::GetDiagServerLogger().GetLogger().LogInfo(
+      __FILE__, __LINE__, "", [&tcp_rx_message](std::stringstream &msg) { 
+        msg << "tcp server receive data:"; 
+        for (auto iter : tcp_rx_message->rxBuffer_) {
+          msg << std::hex  << static_cast<int>(iter) << " " ;
+        }
+        msg << std::dec;
+      });
+
   received_doip_message.host_ip_address = tcp_rx_message->host_ip_address_;
   received_doip_message.port_num = tcp_rx_message->host_port_num_;
   received_doip_message.protocol_version = tcp_rx_message->rxBuffer_[0];
@@ -225,13 +311,16 @@ auto DoipChannelHandlerImpl::ProcessDoIPPayloadLength(uint32_t payloadLen, uint1
 // Function to get payload type
 auto DoipChannelHandlerImpl::GetDoIPPayloadType(std::vector<uint8_t> payload) 
   noexcept -> uint16_t {
-    return 0;
+    return ((uint16_t) (((payload[BYTE_POS_TWO] & 0xFF) << 8) | (payload[BYTE_POS_THREE] & 0xFF)));
 }
 
 // Function to get payload length
 auto DoipChannelHandlerImpl::GetDoIPPayloadLength(std::vector<uint8_t> payload) 
   noexcept -> uint32_t {
-    return 0;
+    return ((uint32_t) ((payload[BYTE_POS_FOUR] << 24U) & 0xFF000000) |
+        (uint32_t) ((payload[BYTE_POS_FIVE] << 16U) & 0x00FF0000) |
+        (uint32_t) ((payload[BYTE_POS_SIX] << 8U) & 0x0000FF00) |
+        (uint32_t) ((payload[BYTE_POS_SEVEN] & 0x000000FF)));
 }
 
 // Function to process DoIP payload responses
@@ -309,6 +398,9 @@ void DoipChannel::StartAcceptingConnection() {
   }
 }
 
+bool DoipChannel::IsAlive() {
+  return tcp_connection_handler_->GetConnectionState();
+}
 // Function to transmit the uds message
 uds_transport::UdsTransportProtocolMgr::TransmissionResult DoipChannel::Transmit(
   TcpMessagePtr message) {

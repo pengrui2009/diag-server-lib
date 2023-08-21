@@ -43,6 +43,10 @@ DoipTcpSocketHandler::TcpConnectionHandler::~TcpConnectionHandler() {
   thread_.join();
 }
 
+// 
+bool DoipTcpSocketHandler::TcpConnectionHandler::GetConnectionState() {
+  return (running_.load());
+}
 void DoipTcpSocketHandler::TcpConnectionHandler::Initialize() {
   std::lock_guard<std::mutex> lck(mutex_);
   // start reading
