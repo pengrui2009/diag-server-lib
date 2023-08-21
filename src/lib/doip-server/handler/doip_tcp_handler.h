@@ -245,6 +245,7 @@ public:
     // Set expected Diagnostic Pending Response Uds message
     void SetExpectedDiagnosticMessageWithPendingUdsMessageToBeSend(std::vector<std::uint8_t> payload, std::uint8_t num_of_pending_response);
 
+    bool GetConnectState();
   private:
     // Store the logical address
     std::uint16_t logical_address_;
