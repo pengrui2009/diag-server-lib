@@ -56,15 +56,22 @@ public:
     uds_services_[sid] = std::move(service);
   }
 
+  ConnectResult ListenDiagClientConnect(std::uint16_t target_address, IpAddress host_ip_addr) {
+    return ConnectResult::kConnectSuccess;
+  }
+
+  DisconnectResult CloseDiagClientConnect() {
+    return DisconnectResult::kDisconnectSuccess;
+  }
   // Description   : Function to connect to Diagnostic Server
   // @param input  : Nothing
   // @return value : ConnectResult
-  ConnectResult ConnectToDiagServer(std::uint16_t target_address, IpAddress host_ip_addr) override;
+  // ConnectResult ConnectToDiagServer(std::uint16_t target_address, IpAddress host_ip_addr) override;
 
   // Description   : Function to disconnect from Diagnostic Server
   // @param input  : Nothing
   // @return value : DisconnectResult
-  DisconnectResult DisconnectFromDiagServer() override;  
+  // DisconnectResult DisconnectFromDiagServer() override;  
 
   // 
   bool GetClientDiagState() override;

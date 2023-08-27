@@ -15,8 +15,9 @@
 #include <cstdint>
 
 #include "diagnostic_server_uds_message_type.h"
-// #include "uds_transport/connection.h"
-// #include "uds_transport/conversion_handler.h"
+#include "uds_transport/connection.h"
+#include "uds_transport/conversion_handler.h"
+#include "src/dcm/service/service_base.h"
 
 namespace diag {
 namespace server {
@@ -97,6 +98,10 @@ public:
    */
   virtual void Shutdown() = 0;
 
+  virtual void Register(uint8_t sid, std::unique_ptr<ServiceBase> service) = 0;
+
+  // Register Connection
+  // virtual void RegisterConnection(std::shared_ptr<::uds_transport::Connection> connection) = 0;
   /**
    * @brief       Function to connect to Diagnostic Server.
    * @param[in]   target_address
@@ -135,9 +140,9 @@ public:
       uds_message::UdsRequestMessageConstPtr message) = 0;
 
   // Register Connection
-  // virtual void RegisterConnection(std::shared_ptr<::uds_transport::Connection> connection) = 0;
+  virtual void RegisterConnection(std::shared_ptr<::uds_transport::Connection> connection) = 0;
 
-  // virtual std::shared_ptr<::uds_transport::ConversionHandler> &GetConversationHandler() = 0;
+  virtual std::shared_ptr<::uds_transport::ConversionHandler> &GetConversationHandler() = 0;
   
 };
 }  // namespace conversation

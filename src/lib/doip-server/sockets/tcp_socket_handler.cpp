@@ -5,7 +5,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
-
+#include <iostream>
 #include "sockets/tcp_socket_handler.h"
 
 namespace doip_handler {
@@ -44,9 +44,10 @@ DoipTcpSocketHandler::TcpConnectionHandler::~TcpConnectionHandler() {
 }
 
 // 
-bool DoipTcpSocketHandler::TcpConnectionHandler::GetConnectionState() {
-  return (running_.load());
-}
+// bool DoipTcpSocketHandler::TcpConnectionHandler::GetConnectionState() {
+//   return (running_.load());
+// }
+
 void DoipTcpSocketHandler::TcpConnectionHandler::Initialize() {
   std::lock_guard<std::mutex> lck(mutex_);
   // start reading

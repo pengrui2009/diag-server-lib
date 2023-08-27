@@ -63,7 +63,7 @@ private:
   // map to store conversation pointer along with conversation name
   // std::unordered_map<std::string, std::unique_ptr<diag::server::conversation::DiagServerConversation>>
   //     diag_server_conversation_map;
-  std::unordered_map<uint16_t, std::unique_ptr<diag::server::conversation::DmConversation>> diag_server_conversations_;
+  std::unordered_map<uint16_t, std::unique_ptr<diag::server::conversation::DiagServerConversation>> diag_server_conversations_;
 
   // store the diag server conversation for vehicle discovery
   std::unique_ptr<diag::server::conversation::VdConversation> diag_server_vehicle_discovery_conversation;

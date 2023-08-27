@@ -53,7 +53,8 @@ CreateTcpServerSocket::TcpServerConnection CreateTcpServerSocket::GetTcpServerCo
 CreateTcpServerSocket::TcpServerConnection::TcpServerConnection(boost::asio::io_context &io_context,
                                                                 TcpHandlerRead &&tcp_handler_read)
     : tcp_socket_{io_context},
-      tcp_handler_read_{tcp_handler_read} {}
+      tcp_handler_read_{tcp_handler_read} {
+      }
 
 TcpSocket &CreateTcpServerSocket::TcpServerConnection::GetSocket() { return tcp_socket_; }
 

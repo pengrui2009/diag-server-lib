@@ -38,6 +38,7 @@ set(src_header_path src)
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${src_header_path}
         ${diag_server_header_path}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/lib/uds-transport-layer-api/
         )
 
 if (${ENABLE_WIN_SYSTEM} MATCHES "ON")

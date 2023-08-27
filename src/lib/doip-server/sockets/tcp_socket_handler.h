@@ -43,6 +43,7 @@ public:
     // stop the reception thread
     void DeInitialize();
 
+    // get connection state: 1:connect or 0: disconnect
     bool GetConnectionState() {
       return connection_state_.load();
     }
@@ -52,7 +53,7 @@ public:
     bool Transmit(TcpMessageConstPtr tcp_tx_message);
 
     // get connection state: 1:connect or 0: disconnect
-    bool GetConnectionState();
+    // bool GetConnectionState();
     
   private:
     // read handler

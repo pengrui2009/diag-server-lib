@@ -46,7 +46,8 @@ int main() {
     
 
     // funcitonal_diag_server_conversation.Startup();
-
+    physical_diag_server_conversation.Startup();
+    
     while(1) {
         if (!physical_diag_server_conversation.GetClientDiagState()) {
             physical_diag_server_conversation.Startup();

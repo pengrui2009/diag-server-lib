@@ -65,9 +65,11 @@ bool createUdpClientSocket::Open() {
   if (ec.value() == boost::system::errc::success) {
     // set broadcast option
     boost::asio::socket_base::broadcast broadcast_option(true);
+
     udp_socket_->set_option(broadcast_option);
     // reuse address
     boost::asio::socket_base::reuse_address reuse_address_option(true);
+
     udp_socket_->set_option(reuse_address_option);
 
     if (port_type_ == PortType::kUdp_Broadcast) {

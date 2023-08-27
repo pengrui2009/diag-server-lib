@@ -90,7 +90,7 @@ void DmConversation::Shutdown() {
                                                                             << "Shutdown completed";
                                                                       });
 }
-
+#if 0
 DiagServerConversation::ConnectResult DmConversation::ConnectToDiagServer(std::uint16_t target_address,
                                                                           IpAddress host_ip_addr) {
   // create an uds message just to get the port number
@@ -149,7 +149,7 @@ DiagServerConversation::DisconnectResult DmConversation::DisconnectFromDiagServe
   }
   return ret_val;
 }
-
+#endif
 std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr> DmConversation::SendDiagnosticRequest(
     uds_message::UdsRequestMessageConstPtr message) {
   std::pair<DiagServerConversation::DiagResult, uds_message::UdsResponseMessagePtr> ret_val{
